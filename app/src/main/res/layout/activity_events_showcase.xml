@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/eventsShowcase_dispatchToStartedOrWait"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="DISPATCH_TO_STARTED_OR_WAIT"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/eventsShowcase_dispatchToStartedOrThrowAway"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/eventsShowcase_dispatchToStartedOrThrowAway"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="DISPATCH_TO_STARTED_OR_THROW_AWAY"
+        app:layout_constraintTop_toBottomOf="@+id/eventsShowcase_dispatchToStartedOrWait"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/eventsShowcase_dispatchEveryTime"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/eventsShowcase_dispatchEveryTime"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="DISPATCH_EVERY_TIME"
+        app:layout_constraintTop_toBottomOf="@+id/eventsShowcase_dispatchToStartedOrThrowAway"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/eventsShowcase_delaySettings"/>
+
+    <RadioGroup
+        android:id="@+id/eventsShowcase_delaySettings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/eventsShowcase_dispatchEveryTime"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/eventsShowcase_delayNone"
+            android:layout_width="150dp"
+            android:layout_height="40dp"
+            android:text="No delay" />
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/eventsShowcase_delayOneSecond"
+            android:layout_width="150dp"
+            android:layout_height="40dp"
+            android:text="1 second delay"
+            android:enabled="true"/>
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/eventsShowcase_delayThreeSeconds"
+            android:layout_width="150dp"
+            android:layout_height="40dp"
+            android:text="3 seconds delay"/>
+
+        <androidx.appcompat.widget.AppCompatRadioButton
+            android:id="@+id/eventsShowcase_delayFiveSeconds"
+            android:layout_width="150dp"
+            android:layout_height="40dp"
+            android:text="5 seconds delay"/>
+
+    </RadioGroup>
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
