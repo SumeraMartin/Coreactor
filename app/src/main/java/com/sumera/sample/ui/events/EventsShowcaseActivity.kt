@@ -1,5 +1,7 @@
 package com.sumera.sample.ui.events
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import com.sumera.coreactor.CoreactorActivity
@@ -15,6 +17,12 @@ import com.sumera.sample.ui.events.contract.OnEventsDelayChanged
 import kotlinx.android.synthetic.main.activity_events_showcase.*
 
 class EventShowcaseActivity : CoreactorActivity<EventsShowcaseState>(), CoreactorView<EventsShowcaseState> {
+
+    companion object {
+        fun getIntent(context: Context): Intent {
+            return Intent(context, EventShowcaseActivity::class.java)
+        }
+    }
 
     override fun layoutRes() = R.layout.activity_events_showcase
 

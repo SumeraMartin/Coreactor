@@ -2,7 +2,7 @@ package com.sumera.sample.ui.simpleload.contract
 
 import com.sumera.coreactor.contract.reducer.Reducer
 
-class ShowLoadingState : Reducer<SimpleLoadState>() {
+object ShowLoadingState : Reducer<SimpleLoadState>() {
     override fun reduce(oldState: SimpleLoadState): SimpleLoadState {
         return oldState.copy(
             isInitialState = false,

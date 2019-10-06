@@ -1,5 +1,7 @@
 package com.sumera.sample.ui.infinity
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,6 +16,12 @@ import com.sumera.sample.ui.infinity.contract.OnRetryLoadingNext
 import kotlinx.android.synthetic.main.activity_infinity.*
 
 class InfinityLoadingActivity : CoreactorActivity<InfinityLoadingState>(), CoreactorView<InfinityLoadingState> {
+
+    companion object {
+        fun getIntent(context: Context): Intent {
+            return Intent(context, InfinityLoadingActivity::class.java)
+        }
+    }
 
     override val coreactorFactory = InfinityLoadingCoreactorFactory()
 

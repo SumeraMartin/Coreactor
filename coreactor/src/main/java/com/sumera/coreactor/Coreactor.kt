@@ -5,17 +5,18 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ViewModel
-import com.sumera.coreactor.contract.action.Action
 import com.sumera.coreactor.contract.EventOrReducer
-import com.sumera.coreactor.contract.state.State
+import com.sumera.coreactor.contract.action.Action
 import com.sumera.coreactor.contract.event.Event
 import com.sumera.coreactor.contract.event.EventBehaviour
 import com.sumera.coreactor.contract.reducer.ActionReducer
 import com.sumera.coreactor.contract.reducer.Reducer
+import com.sumera.coreactor.contract.state.State
 import com.sumera.coreactor.error.CoreactorException
 import com.sumera.coreactor.interceptor.CoreactorInterceptor
 import com.sumera.coreactor.internal.Either
 import com.sumera.coreactor.lifecycle.LifecycleState
+import com.sumera.coreactor.log.CoreactorLogger
 import com.sumera.coreactor.log.implementation.NoOpLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -63,7 +64,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return stateHandler.stateChannel
     }
 
-    protected open val logger = NoOpLogger<STATE>()
+    protected open val logger: CoreactorLogger<STATE> = NoOpLogger()
 
     protected open val interceptor: CoreactorInterceptor<STATE>? = null
 

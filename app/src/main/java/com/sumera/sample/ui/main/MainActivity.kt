@@ -5,7 +5,13 @@ import com.sumera.coreactor.CoreactorActivity
 import com.sumera.coreactor.CoreactorView
 import com.sumera.coreactor.contract.event.Event
 import com.sumera.sample.R
+import com.sumera.sample.ui.events.EventShowcaseActivity
+import com.sumera.sample.ui.infinity.InfinityLoadingActivity
+import com.sumera.sample.ui.main.contract.EventsShowcaseClicked
+import com.sumera.sample.ui.main.contract.InfinityLoadingClicked
 import com.sumera.sample.ui.main.contract.MainState
+import com.sumera.sample.ui.main.contract.NavigateToEventsShowcase
+import com.sumera.sample.ui.main.contract.NavigateToInfinityLoading
 import com.sumera.sample.ui.main.contract.NavigateToSimpleLoad
 import com.sumera.sample.ui.main.contract.SimpleLoadClicked
 import com.sumera.sample.ui.simpleload.SimpleLoadActivity
@@ -25,6 +31,12 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
         main_simpleLoad.setOnClickListener {
             sendAction { SimpleLoadClicked }
         }
+        main_infinityLoading.setOnClickListener {
+            sendAction { InfinityLoadingClicked }
+        }
+        main_eventsShowcase.setOnClickListener {
+            sendAction { EventsShowcaseClicked }
+        }
     }
 
     override fun onState(state: MainState) {
@@ -35,6 +47,12 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
         when (event) {
             NavigateToSimpleLoad -> {
                 startActivity(SimpleLoadActivity.getIntent(this))
+            }
+            NavigateToInfinityLoading -> {
+                startActivity(InfinityLoadingActivity.getIntent(this))
+            }
+            NavigateToEventsShowcase -> {
+                startActivity(EventShowcaseActivity.getIntent(this))
             }
         }
     }
