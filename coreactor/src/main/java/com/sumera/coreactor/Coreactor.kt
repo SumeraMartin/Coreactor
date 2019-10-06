@@ -14,6 +14,7 @@ import com.sumera.coreactor.contract.reducer.Reducer
 import com.sumera.coreactor.contract.state.State
 import com.sumera.coreactor.error.CoreactorException
 import com.sumera.coreactor.interceptor.CoreactorInterceptor
+import com.sumera.coreactor.interceptor.implementation.SimpleInterceptor
 import com.sumera.coreactor.internal.Either
 import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.log.CoreactorLogger
@@ -66,7 +67,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     protected open val logger: CoreactorLogger<STATE> = NoOpLogger()
 
-    protected open val interceptor: CoreactorInterceptor<STATE>? = null
+    protected open val interceptor: CoreactorInterceptor<STATE> = SimpleInterceptor()
 
     private var isNewlyCreated = true
 
@@ -262,38 +263,40 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
 
         fun dispatchEvent(event: Event<STATE>) {
-            logger.onEventEmitted(event)
+            val interceptedEvent = interceptor.onInterceptEvent(event) ?: return
+            logger.onEventEmitted(interceptedEvent)
 
-            when (EventDispatchState.from(lifecycleStateHandler.currentLifecycleState, event.behaviour)) {
+            when (EventDispatchState.from(lifecycleStateHandler.currentLifecycleState, interceptedEvent.behaviour)) {
                 EventDispatchState.DISPATCH_NOW -> {
-                    dispatchNow(event)
+                    dispatchNow(interceptedEvent)
                 }
                 EventDispatchState.DISPATCH_LATER_TO_STARTED_VIEW -> {
-                    dispatchLaterWhenStarted(event)
+                    dispatchLaterWhenStarted(interceptedEvent)
                 }
                 EventDispatchState.DISPATCH_LATER_TO_CREATED_VIEW -> {
-                    dispatchLaterWhenCreated(event)
+                    dispatchLaterWhenCreated(interceptedEvent)
                 }
                 EventDispatchState.THROW_AWAY -> {
-                    throwAway(event)
+                    throwAway(interceptedEvent)
                 }
             }
         }
 
         private fun dispatchNow(event: Event<STATE>) {
-            eventChannelInternal.sendBlocking(event)
-            viewHandler.getViewOrThrow().onEvent(event)
             logger.onEventDispatchedToView(event)
+            viewHandler.getViewOrThrow().onEvent(event)
+            eventChannelInternal.sendBlocking(event)
         }
 
         private fun dispatchLaterWhenStarted(event: Event<STATE>) {
-            eventsWaitingForStartedState.add(event)
             logger.onEventWaitingForStartedView(event)
+            eventsWaitingForStartedState.add(event)
+
         }
 
         private fun dispatchLaterWhenCreated(event: Event<STATE>) {
-            eventsWaitingForCreatedState.add(event)
             logger.onEventWaitingForCreatedView(event)
+            eventsWaitingForCreatedState.add(event)
         }
 
         private fun throwAway(event: Event<STATE>) {
@@ -320,32 +323,33 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
 
         fun setInitialState(state: STATE) {
-            setCurrentState(state)
+            val interceptedState = interceptor.onInterceptState(state) ?: return
+            dispatchStateIfPossible(interceptedState)
+        }
+
+        fun dispatchStateIfPossible(state: STATE) {
+            val interceptedState = interceptor.onInterceptState(state) ?: return
+            if (lifecycleState.isInStartedState) {
+                setCurrentState(interceptedState)
+                dispatchStateToViewNow(interceptedState)
+            } else {
+                setCurrentState(interceptedState)
+            }
         }
 
         fun dispatchStateWaitingForStartedState() {
             dispatchStateToViewNow(currentState)
         }
 
-        fun dispatchStateIfPossible(state: STATE) {
-            if (lifecycleState.isInStartedState) {
-                setCurrentState(state)
-                dispatchStateToViewNow(state)
-            } else {
-                setCurrentState(state)
-            }
-        }
-
         private fun setCurrentState(state: STATE) {
+            logger.onNewStateReceived(state)
             currentStateInternal = state
             stateChannelInternal.sendBlocking(state)
-
-            logger.onNewStateReceived(state)
         }
 
         private fun dispatchStateToViewNow(state: STATE) {
-            viewHandler.getViewOrThrow().onState(state)
             logger.onStateDispatchedToView(state)
+            viewHandler.getViewOrThrow().onState(state)
         }
     }
 
@@ -360,6 +364,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         private val lifecycleStateChannelInternal = BroadcastChannel<LifecycleState>(1)
 
         fun dispatchLifecycleState(lifecycleState: LifecycleState) = launch {
+            interceptor.onLifecycleStateChanged(lifecycleState)
             logger.onLifecycle(lifecycleState)
 
             when {
@@ -373,9 +378,8 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             }
 
             currentLifecycleState = lifecycleState
-            lifecycleStateChannelInternal.sendBlocking(lifecycleState)
-
             onLifecycleAction(lifecycleState).collectEventOrReducerFlow()
+            lifecycleStateChannelInternal.sendBlocking(lifecycleState)
         }
     }
 
@@ -388,13 +392,14 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         private val reducerChannelInternal = BroadcastChannel<Reducer<STATE>>(1)
 
         fun dispatchReducer(reducer: Reducer<STATE>) {
+            val interceptedReducer = interceptor.onInterceptReducer(reducer) ?: return
+
             val oldState = stateHandler.getStateOrThrow()
-            val newState = reducer.reduce(oldState)
+            val newState = interceptedReducer.reduce(oldState)
 
-            reducerChannelInternal.sendBlocking(reducer)
+            logger.onReducer(oldState, interceptedReducer, newState)
             stateHandler.dispatchStateIfPossible(newState)
-
-            logger.onReducer(oldState, reducer, newState)
+            reducerChannelInternal.sendBlocking(interceptedReducer)
         }
     }
 
@@ -407,10 +412,10 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         private val actionChannelInternal = BroadcastChannel<Action<STATE>>(1)
 
         suspend fun dispatchAction(action: Action<STATE>) {
-            logger.onAction(action)
-
-            actionChannelInternal.sendBlocking(action)
-            onAction(action).collectEventOrReducerFlow()
+            val interceptedAction = interceptor.onInterceptAction(action) ?: return
+            logger.onAction(interceptedAction)
+            onAction(interceptedAction).collectEventOrReducerFlow()
+            actionChannelInternal.sendBlocking(interceptedAction)
         }
     }
 

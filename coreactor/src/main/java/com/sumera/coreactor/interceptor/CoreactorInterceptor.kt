@@ -8,13 +8,13 @@ import com.sumera.coreactor.lifecycle.LifecycleState
 
 interface CoreactorInterceptor<STATE : State> {
 
-    fun onInterceptState(state: STATE): STATE
+    fun onInterceptState(state: STATE): STATE?
 
-    fun onInterceptAction(action: Action<STATE>): Action<STATE>
+    fun onInterceptAction(action: Action<STATE>): Action<STATE>?
 
-    fun onInterceptLifecycleAction(lifecycleState: LifecycleState): LifecycleState
+    fun onInterceptReducer(reducer: Reducer<STATE>): Reducer<STATE>?
 
-    fun onInterceptReducer(reducer: Reducer<STATE>): Reducer<STATE>
+    fun onInterceptEvent(event: Event<STATE>): Event<STATE>?
 
-    fun onInterceptEvent(event: Event<STATE>): Event<STATE>
+    fun onLifecycleStateChanged(lifecycleState: LifecycleState)
 }

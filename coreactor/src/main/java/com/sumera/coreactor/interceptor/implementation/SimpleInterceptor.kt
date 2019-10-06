@@ -7,25 +7,25 @@ import com.sumera.coreactor.contract.state.State
 import com.sumera.coreactor.interceptor.CoreactorInterceptor
 import com.sumera.coreactor.lifecycle.LifecycleState
 
-class NoOpInterceptor<STATE : State> : CoreactorInterceptor<STATE> {
+open class SimpleInterceptor<STATE : State> : CoreactorInterceptor<STATE> {
 
-    override fun onInterceptState(state: STATE): STATE {
+    override fun onInterceptState(state: STATE): STATE? {
         return state
     }
 
-    override fun onInterceptAction(action: Action<STATE>): Action<STATE> {
+    override fun onInterceptAction(action: Action<STATE>): Action<STATE>? {
         return action
     }
 
-    override fun onInterceptLifecycleAction(lifecycleState: LifecycleState): LifecycleState {
-        return lifecycleState
-    }
-
-    override fun onInterceptReducer(reducer: Reducer<STATE>): Reducer<STATE> {
+    override fun onInterceptReducer(reducer: Reducer<STATE>): Reducer<STATE>? {
         return reducer
     }
 
-    override fun onInterceptEvent(event: Event<STATE>): Event<STATE> {
+    override fun onInterceptEvent(event: Event<STATE>): Event<STATE>? {
         return event
+    }
+
+    override fun onLifecycleStateChanged(lifecycleState: LifecycleState) {
+        // NoOp
     }
 }
