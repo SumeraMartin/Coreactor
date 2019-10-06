@@ -8,3 +8,7 @@ data class ActionReducer<STATE: State>(private val action: (STATE) -> STATE) : R
         return action(oldState)
     }
 }
+
+fun <STATE : State> reducer(reducerAction: (STATE) -> STATE): ActionReducer<STATE> {
+    return ActionReducer { state -> reducerAction(state) }
+}
