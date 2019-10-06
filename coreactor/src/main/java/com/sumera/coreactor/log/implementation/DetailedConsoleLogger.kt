@@ -1,11 +1,11 @@
 package com.sumera.coreactor.log.implementation
 
 import android.util.Log
-import com.sumera.coreactor.LifecycleState
 import com.sumera.coreactor.contract.action.Action
+import com.sumera.coreactor.contract.event.Event
 import com.sumera.coreactor.contract.reducer.Reducer
 import com.sumera.coreactor.contract.state.State
-import com.sumera.coreactor.contract.event.Event
+import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.log.CoreactorLogger
 
 class DetailedConsoleLogger<STATE : State>(private val tag: String) : CoreactorLogger<STATE> {

@@ -1,11 +1,11 @@
 package com.sumera.coreactor.interceptor.implementation
 
-import com.sumera.coreactor.CoreactorInterceptor
-import com.sumera.coreactor.LifecycleState
 import com.sumera.coreactor.contract.action.Action
+import com.sumera.coreactor.contract.event.Event
 import com.sumera.coreactor.contract.reducer.Reducer
 import com.sumera.coreactor.contract.state.State
-import com.sumera.coreactor.contract.event.Event
+import com.sumera.coreactor.interceptor.CoreactorInterceptor
+import com.sumera.coreactor.lifecycle.LifecycleState
 
 class NoOpInterceptor<STATE : State> : CoreactorInterceptor<STATE> {
 
