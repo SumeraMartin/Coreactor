@@ -12,7 +12,7 @@ object ViewFinishingDetector {
 
     fun isFinishing(fragment: Fragment): Boolean {
         val activity = fragment.activity ?: throw CoreactorException("Fragment is not attached to activity $fragment")
-        if (activity.isChangingConfigurations || activity.isFinishing) {
+        if (activity.isChangingConfigurations || !activity.isFinishing) {
             return false
         }
         return fragment.isRemoving

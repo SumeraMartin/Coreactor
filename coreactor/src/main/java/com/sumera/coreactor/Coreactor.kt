@@ -19,10 +19,12 @@ import com.sumera.coreactor.internal.Either
 import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.log.CoreactorLogger
 import com.sumera.coreactor.log.implementation.NoOpLogger
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -69,6 +71,14 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     protected open val interceptor: CoreactorInterceptor<STATE> = SimpleInterceptor()
 
+    private val lifecycleLaunchExceptionHandler = CoroutineExceptionHandler { _, exception ->
+        throw exception
+    }
+
+    private val actionLaunchExceptionHandler = CoroutineExceptionHandler { _, exception ->
+        onActionException(exception)
+    }
+
     private var isNewlyCreated = true
 
     private val viewHandler = ViewHandler()
@@ -106,7 +116,13 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         viewHandler.unsetView()
     }
 
-    fun sendAction(action: Action<STATE>) = launch {
+    fun sendAction(action: Action<STATE>) {
+        if (lifecycleState.isInitialState) {
+            throw CoreactorException("sendAction shouldn't be called before attachView")
+        }
+        if (lifecycleState.isDetachState) {
+            throw CoreactorException("sendAction shouldn't be called after detachView(true)")
+        }
         actionHandler.dispatchAction(action)
     }
 
@@ -118,6 +134,10 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     protected open fun onLifecycleAction(state: LifecycleState): Flow<EventOrReducer<STATE>> {
         return emptyFlow()
+    }
+
+    protected open fun onActionException(error: Throwable) {
+        throw error
     }
     //endregion
 
@@ -284,14 +304,13 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         private fun dispatchNow(event: Event<STATE>) {
             logger.onEventDispatchedToView(event)
-            viewHandler.getViewOrThrow().onEvent(event)
             eventChannelInternal.sendBlocking(event)
+            viewHandler.getViewOrThrow().onEvent(event)
         }
 
         private fun dispatchLaterWhenStarted(event: Event<STATE>) {
             logger.onEventWaitingForStartedView(event)
             eventsWaitingForStartedState.add(event)
-
         }
 
         private fun dispatchLaterWhenCreated(event: Event<STATE>) {
@@ -316,7 +335,11 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         private var currentStateInternal: STATE? = null
 
-        private val stateChannelInternal = BroadcastChannel<STATE>(1)
+        private val stateChannelInternal = ConflatedBroadcastChannel<STATE>()
+
+        fun getStateOrNull(): STATE? {
+            return currentStateInternal
+        }
 
         fun getStateOrThrow(): STATE {
             return currentStateInternal ?: throw CoreactorException()
@@ -338,7 +361,10 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
 
         fun dispatchStateWaitingForStartedState() {
-            dispatchStateToViewNow(currentState)
+            val state = getStateOrNull()
+            if (state != null) {
+                dispatchStateToViewNow(state)
+            }
         }
 
         private fun setCurrentState(state: STATE) {
@@ -361,11 +387,15 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         var currentLifecycleState: LifecycleState = LifecycleState.INITIAL
 
-        private val lifecycleStateChannelInternal = BroadcastChannel<LifecycleState>(1)
+        private val lifecycleStateChannelInternal = ConflatedBroadcastChannel<LifecycleState>()
 
-        fun dispatchLifecycleState(lifecycleState: LifecycleState) = launch {
+        fun dispatchLifecycleState(lifecycleState: LifecycleState) = launch(lifecycleLaunchExceptionHandler) {
             interceptor.onLifecycleStateChanged(lifecycleState)
             logger.onLifecycle(lifecycleState)
+
+            currentLifecycleState = lifecycleState
+            lifecycleStateChannelInternal.sendBlocking(lifecycleState)
+            onLifecycleAction(lifecycleState).collectEventOrReducerFlow()
 
             when {
                 currentLifecycleState.isCreateState -> {
@@ -376,10 +406,6 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
                     eventHandler.dispatchEventsWaitingForStartedState()
                 }
             }
-
-            currentLifecycleState = lifecycleState
-            onLifecycleAction(lifecycleState).collectEventOrReducerFlow()
-            lifecycleStateChannelInternal.sendBlocking(lifecycleState)
         }
     }
 
@@ -398,8 +424,8 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             val newState = interceptedReducer.reduce(oldState)
 
             logger.onReducer(oldState, interceptedReducer, newState)
-            stateHandler.dispatchStateIfPossible(newState)
             reducerChannelInternal.sendBlocking(interceptedReducer)
+            stateHandler.dispatchStateIfPossible(newState)
         }
     }
 
@@ -411,11 +437,13 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         private val actionChannelInternal = BroadcastChannel<Action<STATE>>(1)
 
-        suspend fun dispatchAction(action: Action<STATE>) {
-            val interceptedAction = interceptor.onInterceptAction(action) ?: return
-            logger.onAction(interceptedAction)
-            onAction(interceptedAction).collectEventOrReducerFlow()
-            actionChannelInternal.sendBlocking(interceptedAction)
+        fun dispatchAction(action: Action<STATE>) = launch(actionLaunchExceptionHandler) {
+            val interceptedAction = interceptor.onInterceptAction(action)
+            if (interceptedAction != null) {
+                logger.onAction(interceptedAction)
+                actionChannelInternal.sendBlocking(interceptedAction)
+                onAction(interceptedAction).collectEventOrReducerFlow()
+            }
         }
     }
 

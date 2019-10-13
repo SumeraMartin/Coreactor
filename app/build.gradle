@@ -37,7 +37,8 @@ dependencies {
     implementation "androidx.constraintlayout:constraintlayout:$constraint_layout"
     implementation "com.google.android.material:material:$material_design"
 
-    testImplementation "junit:junit:$junit"
-    androidTestImplementation "androidx.test:runner:$android_test_runner"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso"
+    // Test
+    testImplementation "junit:junit:$junit_version"
+    androidTestImplementation "androidx.test:runner:$android_test_runner_version"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_version"
 }

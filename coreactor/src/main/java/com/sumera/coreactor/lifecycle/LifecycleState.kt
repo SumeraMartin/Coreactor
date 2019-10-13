@@ -6,12 +6,47 @@ import com.sumera.coreactor.error.CoreactorException
 enum class LifecycleState {
     INITIAL, ON_ATTACH, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP, ON_DESTROY, ON_DETACH;
 
+    val isInitialState: Boolean get() {
+        return this == INITIAL
+    }
+
+    val isAttachState: Boolean get() {
+        return this == ON_ATTACH
+    }
+
     val isCreateState: Boolean get() {
         return this == ON_CREATE
     }
 
     val isStartState: Boolean get() {
         return this == ON_START
+    }
+
+    val isResumeState: Boolean get() {
+        return this == ON_RESUME
+    }
+
+    val isPauseState: Boolean get() {
+        return this == ON_PAUSE
+    }
+
+    val isStopState: Boolean get() {
+        return this == ON_STOP
+    }
+
+    val isDestroyState: Boolean get() {
+        return this == ON_DESTROY
+    }
+
+    val isDetachState: Boolean get() {
+        return this == ON_DETACH
+    }
+
+    val isInCreatedState: Boolean get() {
+        return when (this) {
+            ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP -> true
+            else -> false
+        }
     }
 
     val isInStartedState: Boolean get() {
@@ -21,9 +56,9 @@ enum class LifecycleState {
         }
     }
 
-    val isInCreatedState: Boolean get() {
+    val isInResumedState: Boolean get() {
         return when (this) {
-            ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP -> true
+            ON_RESUME -> true
             else -> false
         }
     }

@@ -15,9 +15,12 @@ buildscript {
     ext.material_design = '1.0.0'
 
     // Tests
-    ext.junit = '4.12'
-    ext.android_test_runner = '1.2.0'
-    ext.espresso = '3.2.0'
+    ext.junit_version = '4.12'
+    ext.android_test_runner_version = '1.2.0'
+    ext.espresso_version = '3.2.0'
+    ext.spek_version = '2.0.8'
+    ext.kotlin_test_version = '1.1.51'
+    ext.mockk_version = '1.9.3'
 
     repositories {
         google()
@@ -25,8 +28,9 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:3.5.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.5.2.0"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }
