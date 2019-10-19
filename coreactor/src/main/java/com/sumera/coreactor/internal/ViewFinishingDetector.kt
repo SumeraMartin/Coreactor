@@ -7,12 +7,12 @@ import com.sumera.coreactor.error.CoreactorException
 object ViewFinishingDetector {
 
     fun isFinishing(activity: Activity): Boolean {
-        return activity.isFinishing
+        return !activity.isChangingConfigurations && activity.isFinishing
     }
 
     fun isFinishing(fragment: Fragment): Boolean {
         val activity = fragment.activity ?: throw CoreactorException("Fragment is not attached to activity $fragment")
-        if (activity.isChangingConfigurations || !activity.isFinishing) {
+        if (activity.isChangingConfigurations || activity.isFinishing) {
             return false
         }
         return fragment.isRemoving
