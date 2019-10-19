@@ -12,6 +12,7 @@ import com.sumera.coreactor.testutils.CoroutineRule
 import com.sumera.coreactor.testutils.LifecycleRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
+import com.sumera.coreactor.testutils.catch
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
@@ -1056,12 +1057,3 @@ class CoreactorTest : Spek({
         }
     }
 })
-
-private fun catch(throwBlock: () -> Unit): Throwable {
-    try {
-        throwBlock()
-    } catch (e: Throwable) {
-        return e
-    }
-    throw AssertionError("Exception was not thrown")
-}
