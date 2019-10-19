@@ -7,3 +7,5 @@ object SimpleLoadClicked : Action<MainState>
 object EventsShowcaseClicked : Action<MainState>
 
 object InfinityLoadingClicked : Action<MainState>
+
+object CounterClicked : Action<MainState>

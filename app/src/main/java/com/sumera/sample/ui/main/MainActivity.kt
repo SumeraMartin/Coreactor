@@ -5,11 +5,14 @@ import com.sumera.coreactor.CoreactorActivity
 import com.sumera.coreactor.CoreactorView
 import com.sumera.coreactor.contract.event.Event
 import com.sumera.sample.R
+import com.sumera.sample.ui.counter.CounterActivity
 import com.sumera.sample.ui.events.EventShowcaseActivity
 import com.sumera.sample.ui.infinity.InfinityLoadingActivity
+import com.sumera.sample.ui.main.contract.CounterClicked
 import com.sumera.sample.ui.main.contract.EventsShowcaseClicked
 import com.sumera.sample.ui.main.contract.InfinityLoadingClicked
 import com.sumera.sample.ui.main.contract.MainState
+import com.sumera.sample.ui.main.contract.NavigateToCounter
 import com.sumera.sample.ui.main.contract.NavigateToEventsShowcase
 import com.sumera.sample.ui.main.contract.NavigateToInfinityLoading
 import com.sumera.sample.ui.main.contract.NavigateToSimpleLoad
@@ -37,6 +40,9 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
         main_eventsShowcase.setOnClickListener {
             sendAction { EventsShowcaseClicked }
         }
+        main_counter.setOnClickListener {
+            sendAction { CounterClicked }
+        }
     }
 
     override fun onState(state: MainState) {
@@ -53,6 +59,9 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
             }
             NavigateToEventsShowcase -> {
                 startActivity(EventShowcaseActivity.getIntent(this))
+            }
+            NavigateToCounter -> {
+                startActivity(CounterActivity.getIntent(this))
             }
         }
     }

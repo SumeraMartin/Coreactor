@@ -35,9 +35,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Events example"
+        app:layout_constraintBottom_toTopOf="@+id/main_counter"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/main_infinityLoading" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/main_counter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Counter example"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/main_infinityLoading"  />
+        app:layout_constraintTop_toBottomOf="@+id/main_eventsShowcase" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
