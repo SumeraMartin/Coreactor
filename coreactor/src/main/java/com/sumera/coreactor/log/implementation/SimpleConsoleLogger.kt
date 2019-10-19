@@ -1,10 +1,10 @@
 package com.sumera.coreactor.log.implementation
 
-import android.util.Log
 import com.sumera.coreactor.contract.action.Action
+import com.sumera.coreactor.contract.event.Event
 import com.sumera.coreactor.contract.reducer.Reducer
 import com.sumera.coreactor.contract.state.State
-import com.sumera.coreactor.contract.event.Event
+import com.sumera.coreactor.internal.log.Logger
 
 class SimpleConsoleLogger<STATE : State>(private val tag: String) : NoOpLogger<STATE>() {
 
@@ -29,6 +29,6 @@ class SimpleConsoleLogger<STATE : State>(private val tag: String) : NoOpLogger<S
     }
 
     private fun log(message: String) {
-        Log.d(tag, message)
+        Logger.log(tag, message)
     }
 }
