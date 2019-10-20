@@ -1,2 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.sumera.coreactor" />
+    package="com.sumera.coreactor" >
+
+    <application>
+        <activity
+            android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar"
+            android:name=".testutils.testactivity.TestCounterActivity" />
+    </application>
+</manifest>
