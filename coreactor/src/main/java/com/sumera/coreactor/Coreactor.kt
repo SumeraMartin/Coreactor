@@ -108,14 +108,6 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
     }
 
-    fun detachView(isFinishing: Boolean) {
-        if (isFinishing) {
-            lifecycleStateHandler.dispatchLifecycleState(LifecycleState.ON_DETACH)
-            cancelActiveCoroutines()
-        }
-        viewHandler.unsetView()
-    }
-
     fun sendAction(action: Action<STATE>) {
         if (lifecycleState.isInitialState) {
             throw CoreactorException("sendAction shouldn't be called before attachView")
@@ -130,6 +122,11 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     protected fun onAny(@Suppress("UNUSED_PARAMETER") source: LifecycleOwner, event: Lifecycle.Event) {
         val lifecycleState = LifecycleState.fromLifecycle(event)
         lifecycleStateHandler.dispatchLifecycleState(lifecycleState)
+    }
+
+    final override fun onCleared() {
+        lifecycleStateHandler.dispatchLifecycleState(LifecycleState.ON_DETACH)
+        cancelActiveCoroutines()
     }
 
     protected open fun onLifecycleAction(state: LifecycleState): Flow<EventOrReducer<STATE>> {
@@ -404,6 +401,9 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
                 currentLifecycleState.isStartState -> {
                     stateHandler.dispatchStateWaitingForStartedState()
                     eventHandler.dispatchEventsWaitingForStartedState()
+                }
+                currentLifecycleState.isDestroyState -> {
+                    viewHandler.unsetView()
                 }
             }
         }

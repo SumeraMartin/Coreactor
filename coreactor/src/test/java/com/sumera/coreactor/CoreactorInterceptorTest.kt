@@ -9,6 +9,7 @@ import com.sumera.coreactor.testutils.CoroutineRule
 import com.sumera.coreactor.testutils.LifecycleRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
+import com.sumera.coreactor.testutils.TestableCoreactor
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -44,7 +45,7 @@ class CoreactorInterceptorTest : Spek({
         }
     }
 
-    class TestCoreactor(override val interceptor: CoreactorInterceptor<TestState>) : Coreactor<TestState>() {
+    class TestCoreactor(override val interceptor: CoreactorInterceptor<TestState>) : TestableCoreactor<TestState>() {
 
         val actionList = mutableListOf<Action<TestState>>()
 

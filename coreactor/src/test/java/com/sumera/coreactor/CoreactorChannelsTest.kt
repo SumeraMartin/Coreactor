@@ -10,6 +10,7 @@ import com.sumera.coreactor.testutils.CoroutineRule
 import com.sumera.coreactor.testutils.LifecycleRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
+import com.sumera.coreactor.testutils.TestableCoreactor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -35,7 +36,7 @@ class CoreactorChannelsTest : Spek({
         }
     }
 
-    class TestCoreactor : Coreactor<TestState>() {
+    class TestCoreactor : TestableCoreactor<TestState>() {
 
         val actionList = mutableListOf<Action<TestState>>()
 

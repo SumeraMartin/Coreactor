@@ -13,10 +13,4 @@ abstract class CoreactorFragment<STATE : State> : Fragment(), CoreactorOwner<STA
 
         coreactorDelegate.initCoreactor(coreactorOwner = this, lifecycle = lifecycle, fragment = this)
     }
-
-    override fun onDestroy() {
-        coreactorDelegate.destroyCoreactor(fragment = this)
-
-        super.onDestroy()
-    }
 }

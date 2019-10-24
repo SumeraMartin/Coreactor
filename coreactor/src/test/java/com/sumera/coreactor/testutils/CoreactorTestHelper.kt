@@ -2,12 +2,11 @@ package com.sumera.coreactor.testutils
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleRegistry
-import com.sumera.coreactor.Coreactor
 import com.sumera.coreactor.CoreactorView
 import com.sumera.coreactor.contract.state.State
 
 class CoreactorTestHelper<STATE : State>(
-    private val coreactor: Coreactor<STATE>,
+    private val coreactor: TestableCoreactor<STATE>,
     private val view: CoreactorView<STATE>,
     private val lifecycleRegistry: LifecycleRegistry
 ) {
@@ -18,11 +17,11 @@ class CoreactorTestHelper<STATE : State>(
     }
 
     fun detachWithFinishing() {
-        coreactor.detachView(true)
+        coreactor.callOnCleared()
     }
 
     fun detachWithoutFinishing() {
-        coreactor.detachView(false)
+        // Do nothing
     }
 
     fun fromOnAttachToOnCreate() {

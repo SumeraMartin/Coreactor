@@ -12,6 +12,7 @@ import com.sumera.coreactor.testutils.CoroutineRule
 import com.sumera.coreactor.testutils.LifecycleRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
+import com.sumera.coreactor.testutils.TestableCoreactor
 import com.sumera.coreactor.testutils.catch
 import io.mockk.mockk
 import io.mockk.verify
@@ -51,7 +52,7 @@ class CoreactorTest : Spek({
         }
     }
 
-    class TestCoreactor(mockLogger: CoreactorLogger<TestState>) : Coreactor<TestState>() {
+    class TestCoreactor(mockLogger: CoreactorLogger<TestState>) : TestableCoreactor<TestState>() {
 
         val actionList = mutableListOf<Action<TestState>>()
 

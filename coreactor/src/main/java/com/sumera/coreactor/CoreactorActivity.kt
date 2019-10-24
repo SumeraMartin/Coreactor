@@ -18,10 +18,4 @@ abstract class CoreactorActivity<STATE : State> : AppCompatActivity(), Coreactor
 
         coreactorDelegate.initCoreactor(coreactorOwner = this, lifecycle = lifecycle, activity = this)
     }
-
-    override fun onDestroy() {
-        coreactorDelegate.destroyCoreactor(activity = this)
-
-        super.onDestroy()
-    }
 }

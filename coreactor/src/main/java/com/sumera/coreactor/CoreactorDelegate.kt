@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModelProviders
 import com.sumera.coreactor.contract.action.Action
 import com.sumera.coreactor.contract.state.State
 import com.sumera.coreactor.error.CoreactorException
-import com.sumera.coreactor.internal.ViewFinishingDetector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -38,14 +37,6 @@ class CoreactorDelegate<STATE : State> : CoroutineScope by MainScope() {
 
     fun sendAction(action: Action<STATE>) = launch {
         coreactor?.sendAction(action) ?: throwUninitialized()
-    }
-
-    fun destroyCoreactor(fragment: Fragment) {
-        coreactor?.detachView(ViewFinishingDetector.isFinishing(fragment)) ?: throwUninitialized()
-    }
-
-    fun destroyCoreactor(activity: FragmentActivity) {
-        coreactor?.detachView(ViewFinishingDetector.isFinishing(activity)) ?: throwUninitialized()
     }
 
     private fun throwUninitialized(): Nothing {
