@@ -17,6 +17,7 @@ import com.sumera.coreactor.testutils.catch
 import io.mockk.mockk
 import io.mockk.verify
 import io.mockk.verifyOrder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.lifecycle.CachingMode
@@ -42,6 +43,8 @@ class CoreactorTest : Spek({
 
     class InterceptedAction : Action<TestState>
 
+    class CancelableAtion : Action<TestState>
+
     data class TriggerEventAction(val message: String, val behaviour: EventBehaviour) : Action<TestState>
 
     data class MessageEvent(val msg: String, override val behaviour: EventBehaviour) : Event<TestState>()
@@ -59,6 +62,8 @@ class CoreactorTest : Spek({
         var createInitialStateCalledCount = 0
 
         var actionExceptionsList = mutableListOf<Throwable>()
+
+        var wasCanceled = false
 
         override val logger = mockLogger
 
@@ -86,6 +91,14 @@ class CoreactorTest : Spek({
             }
             if (action is ThrowExceptionAction) {
                 throw TestException()
+            }
+            if (action is CancelableAtion) {
+                try {
+                    delay(Long.MAX_VALUE)
+                } catch (error: CancellationException) {
+                    wasCanceled = true
+                    throw error
+                }
             }
         }
 
@@ -837,6 +850,21 @@ class CoreactorTest : Spek({
                 assertEquals(1, coreactor.actionExceptionsList.size)
                 assertTrue { coreactor.actionExceptionsList[0] is TestException }
                 coreactor.actionExceptionsList.clear()
+            }
+        }
+    }
+
+    Feature("coroutines are canceled after detaching") {
+        Scenario("delayed action is send and coreactor is detached before finishing") {
+            When("delayed action is send and then coreactor is detached") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactor.sendAction(CancelableAtion())
+                coreactorHelper.fromOnResumeToOnDestroy()
+                coreactorHelper.detachWithFinishing()
+            }
+            Then("running flow should be canceled") {
+                assertTrue { coreactor.wasCanceled }
             }
         }
     }
