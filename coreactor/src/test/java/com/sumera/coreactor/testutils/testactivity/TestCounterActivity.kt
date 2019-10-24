@@ -8,7 +8,7 @@ import io.mockk.mockk
 
 class TestCounterActivity : CoreactorActivity<TestCounterState>() {
 
-    override fun layoutRes() = R.layout.test_activity
+    override fun layoutRes() = R.layout.test_view
 
     val mockView: CoreactorView<TestCounterState> = mockk(relaxUnitFun = true)
 
