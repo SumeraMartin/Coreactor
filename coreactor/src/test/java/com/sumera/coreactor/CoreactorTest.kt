@@ -19,6 +19,8 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.lifecycle.CachingMode
 import org.spekframework.spek2.style.gherkin.Feature
@@ -41,9 +43,11 @@ class CoreactorTest : Spek({
 
     class ThrowExceptionAction : Action<TestState>
 
+    class ThrowExceptionInCoroutineAction : Action<TestState>
+
     class InterceptedAction : Action<TestState>
 
-    class CancelableAtion : Action<TestState>
+    class CancelableAction : Action<TestState>
 
     data class TriggerEventAction(val message: String, val behaviour: EventBehaviour) : Action<TestState>
 
@@ -61,30 +65,26 @@ class CoreactorTest : Spek({
 
         var createInitialStateCalledCount = 0
 
-        var actionExceptionsList = mutableListOf<Throwable>()
-
         var wasCanceled = false
 
         override val logger = mockLogger
-
-        override fun onActionException(error: Throwable) {
-            actionExceptionsList.add(error)
-        }
 
         override fun createInitialState(): TestState {
             createInitialStateCalledCount += 1
             return TestState(initialCounterValue)
         }
 
-        override fun onAction(action: Action<TestState>) = coreactorFlow {
+        override fun onAction(action: Action<TestState>) {
             actionList.add(action)
 
             if (action is IncrementAction) {
                 emit(IncrementReducer())
             }
             if (action is DelayedIncrementAction) {
-                delay(defaultDelay)
-                emit(IncrementReducer())
+                launch {
+                    delay(defaultDelay)
+                    emit(IncrementReducer())
+                }
             }
             if (action is TriggerEventAction) {
                 emit(MessageEvent(action.message, action.behaviour))
@@ -92,12 +92,19 @@ class CoreactorTest : Spek({
             if (action is ThrowExceptionAction) {
                 throw TestException()
             }
-            if (action is CancelableAtion) {
-                try {
-                    delay(Long.MAX_VALUE)
-                } catch (error: CancellationException) {
-                    wasCanceled = true
-                    throw error
+            if (action is ThrowExceptionInCoroutineAction) {
+                runBlocking {
+                    throw TestException()
+                }
+            }
+            if (action is CancelableAction) {
+                launch {
+                    try {
+                        delay(Long.MAX_VALUE)
+                    } catch (error: CancellationException) {
+                        wasCanceled = true
+                        throw error
+                    }
                 }
             }
         }
@@ -128,8 +135,6 @@ class CoreactorTest : Spek({
     }
 
     afterEachGroup {
-        assertEquals(0, coreactor.actionExceptionsList.size)
-
         lifecycleRule.tearDown()
         coroutineRule.tearDown()
     }
@@ -840,16 +845,28 @@ class CoreactorTest : Spek({
         }
     }
 
-    Feature("exception thrown during onAction is caught") {
+    Feature("exception thrown during onAction") {
         Scenario("exception in onAction is throw") {
+            lateinit var result: Throwable
             When("action causing exception is send") {
                 coreactorHelper.attach()
-                coreactor.sendAction(ThrowExceptionAction())
+                result = catch { coreactor.sendAction(ThrowExceptionAction()) }
+            }
+            Then("exception is thrown") {
+                assertTrue { result is TestException }
+            }
+        }
+    }
+
+    Feature("exception thrown during onAction in coroutine") {
+        Scenario("exception in onAction is throw") {
+            lateinit var result: Throwable
+            When("action causing exception is send") {
+                coreactorHelper.attach()
+                result = catch { coreactor.sendAction(ThrowExceptionInCoroutineAction()) }
             }
             Then("exception is handled") {
-                assertEquals(1, coreactor.actionExceptionsList.size)
-                assertTrue { coreactor.actionExceptionsList[0] is TestException }
-                coreactor.actionExceptionsList.clear()
+                assertTrue { result is TestException }
             }
         }
     }
@@ -859,7 +876,7 @@ class CoreactorTest : Spek({
             When("delayed action is send and then coreactor is detached") {
                 coreactorHelper.attach()
                 coreactorHelper.fromOnAttachToOnResume()
-                coreactor.sendAction(CancelableAtion())
+                coreactor.sendAction(CancelableAction())
                 coreactorHelper.fromOnResumeToOnDestroy()
                 coreactorHelper.detachWithFinishing()
             }

@@ -19,7 +19,6 @@ import com.sumera.coreactor.internal.Either
 import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.log.CoreactorLogger
 import com.sumera.coreactor.log.implementation.NoOpLogger
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -30,11 +29,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, CoroutineScope by MainScope() {
@@ -71,14 +68,6 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     protected open val interceptor: CoreactorInterceptor<STATE> = SimpleInterceptor()
 
-    private val lifecycleLaunchExceptionHandler = CoroutineExceptionHandler { _, exception ->
-        throw exception
-    }
-
-    private val actionLaunchExceptionHandler = CoroutineExceptionHandler { _, exception ->
-        onActionException(exception)
-    }
-
     private var isNewlyCreated = true
 
     private val viewHandler = ViewHandler()
@@ -95,16 +84,16 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     abstract fun createInitialState(): STATE
 
-    abstract fun onAction(action: Action<STATE>): Flow<EventOrReducer<STATE>>
+    abstract fun onAction(action: Action<STATE>)
 
     //region Public methods
     fun attachView(coreactorView: CoreactorView<STATE>) {
         viewHandler.setView(coreactorView)
 
         if (isNewlyCreated) {
+            isNewlyCreated = false
             stateHandler.setInitialState(createInitialState())
             lifecycleStateHandler.dispatchLifecycleState(LifecycleState.ON_ATTACH)
-            isNewlyCreated = false
         }
     }
 
@@ -129,12 +118,28 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         cancelActiveCoroutines()
     }
 
-    protected open fun onLifecycleAction(state: LifecycleState): Flow<EventOrReducer<STATE>> {
-        return emptyFlow()
+    protected open fun onLifecycleAction(state: LifecycleState) {
+        // NoOp
     }
 
     protected open fun onActionException(error: Throwable) {
         throw error
+    }
+
+    protected fun onLifecycleException(error: Throwable) {
+        throw error
+    }
+
+    protected fun emit(block: () -> EventOrReducer<STATE>) {
+        dispatchEventOrReducer(block())
+    }
+
+    protected fun emit(eventOrReducer: EventOrReducer<STATE>) {
+        dispatchEventOrReducer(eventOrReducer)
+    }
+
+    protected fun emitReducer(reducerBlock: (STATE) -> STATE) = apply {
+        emit(reducer(reducerBlock))
     }
     //endregion
 
@@ -143,16 +148,8 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return flow(block)
     }
 
-    protected fun reducer(reducerAction: (STATE) -> STATE): ActionReducer<STATE> {
-        return ActionReducer { state -> reducerAction(state) }
-    }
-
-    protected suspend fun FlowCollector<EventOrReducer<STATE>>.emitReducer(reducerAction: (STATE) -> STATE) = apply {
-        emit(reducer(reducerAction))
-    }
-
-    protected suspend fun FlowCollector<EventOrReducer<STATE>>.emitFrom(emitAction: () -> EventOrReducer<STATE>) {
-        emit(emitAction())
+    protected fun reducer(reducerBlock: (STATE) -> STATE): ActionReducer<STATE> {
+        return ActionReducer { state -> reducerBlock(state) }
     }
 
     protected suspend fun waitUntilState(state: STATE): STATE {
@@ -217,15 +214,13 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         cancel("View attached to this coreactor will be destroyed")
     }
 
-    private suspend fun Flow<EventOrReducer<STATE>>.collectEventOrReducerFlow() {
-        collect { eitherEventOrReducer ->
-            when (val eventOrReducer = eitherEventOrReducer.toEither) {
-                is Either.Left -> {
-                    reducerHandler.dispatchReducer(eventOrReducer.value)
-                }
-                is Either.Right -> {
-                    eventHandler.dispatchEvent(eventOrReducer.value)
-                }
+    private fun dispatchEventOrReducer(eventOrReducer: EventOrReducer<STATE>) {
+        when (val eventOrReducer = eventOrReducer.toEither) {
+            is Either.Left -> {
+                reducerHandler.dispatchReducer(eventOrReducer.value)
+            }
+            is Either.Right -> {
+                eventHandler.dispatchEvent(eventOrReducer.value)
             }
         }
     }
@@ -383,16 +378,17 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
 
         var currentLifecycleState: LifecycleState = LifecycleState.INITIAL
+            private set
 
         private val lifecycleStateChannelInternal = ConflatedBroadcastChannel<LifecycleState>()
 
-        fun dispatchLifecycleState(lifecycleState: LifecycleState) = launch(lifecycleLaunchExceptionHandler) {
+        fun dispatchLifecycleState(lifecycleState: LifecycleState) {
             interceptor.onLifecycleStateChanged(lifecycleState)
             logger.onLifecycle(lifecycleState)
 
             currentLifecycleState = lifecycleState
             lifecycleStateChannelInternal.sendBlocking(lifecycleState)
-            onLifecycleAction(lifecycleState).collectEventOrReducerFlow()
+            onLifecycleAction(lifecycleState)
 
             when {
                 currentLifecycleState.isCreateState -> {
@@ -437,12 +433,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         private val actionChannelInternal = BroadcastChannel<Action<STATE>>(1)
 
-        fun dispatchAction(action: Action<STATE>) = launch(actionLaunchExceptionHandler) {
+        fun dispatchAction(action: Action<STATE>) {
             val interceptedAction = interceptor.onInterceptAction(action)
             if (interceptedAction != null) {
                 logger.onAction(interceptedAction)
                 actionChannelInternal.sendBlocking(interceptedAction)
-                onAction(interceptedAction).collectEventOrReducerFlow()
+                onAction(interceptedAction)
             }
         }
     }

@@ -9,7 +9,7 @@ class CounterCoreactor : Coreactor<CounterState>() {
         return CounterState(counter = 0)
     }
 
-    override fun onAction(action: Action<CounterState>) = coreactorFlow {
+    override fun onAction(action: Action<CounterState>) {
         when (action) {
             OnIncrementClicked -> {
                 emit(IncrementReducer)

@@ -1,7 +1,6 @@
 package com.sumera.sample.ui.infinity
 
 import com.sumera.coreactor.Coreactor
-import com.sumera.coreactor.CoreactorFlow
 import com.sumera.coreactor.contract.action.Action
 import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.sample.interactors.GetItemsInteractor
@@ -22,6 +21,7 @@ import com.sumera.sample.ui.infinity.contract.ShowNextContent
 import com.sumera.sample.ui.infinity.contract.ShowNextError
 import com.sumera.sample.ui.infinity.contract.ShowNextLoading
 import com.sumera.sample.ui.infinity.contract.ShowUpdatedItem
+import kotlinx.coroutines.launch
 
 class InfinityLoadingCoreactor(
     private val getItemsInteractor: GetItemsInteractor,
@@ -38,7 +38,7 @@ class InfinityLoadingCoreactor(
         )
     )
 
-    override fun onLifecycleAction(state: LifecycleState) = coreactorFlow {
+    override fun onLifecycleAction(state: LifecycleState) {
         when (state) {
             LifecycleState.ON_START -> {
                 loadInitialData()
@@ -46,7 +46,7 @@ class InfinityLoadingCoreactor(
         }
     }
 
-    override fun onAction(action: Action<InfinityLoadingState>) = coreactorFlow {
+    override fun onAction(action: Action<InfinityLoadingState>) {
         when (action) {
             OnRetryLoading -> {
                 loadInitialData()
@@ -63,48 +63,57 @@ class InfinityLoadingCoreactor(
         }
     }
 
-    private suspend fun CoreactorFlow<InfinityLoadingState>.loadInitialData() {
+    private fun loadInitialData() {
         if (state.canLoadInitialData) {
             emit(ShowLoading)
-            getItemsInteractor.execute(0).unwrap(
-                onValue = { value ->
-                    val wrappedItems = value.map { ItemWrapper(it, false, null) }
-                    emit(ShowContent(wrappedItems))
-                },
-                onError = { error ->
-                    emit(ShowError(error))
-                }
-            )
+
+            launch {
+                getItemsInteractor.execute(0).unwrap(
+                    onValue = { value ->
+                        val wrappedItems = value.map { ItemWrapper(it, false, null) }
+                        emit(ShowContent(wrappedItems))
+                    },
+                    onError = { error ->
+                        emit(ShowError(error))
+                    }
+                )
+            }
         }
     }
 
-    private suspend fun CoreactorFlow<InfinityLoadingState>.loadNextData() {
+    private fun loadNextData() {
         if (state.canLoadNextItems) {
             emit(ShowNextLoading)
-            getItemsInteractor.execute(state.content.size).unwrap(
-                onValue = { items ->
-                    val wrappedItems = items.map { ItemWrapper(it, false, null) }
-                    emit(ShowNextContent(wrappedItems))
-                },
-                onError = { error ->
-                    emit(ShowNextError(error))
-                }
-            )
+
+            launch {
+                getItemsInteractor.execute(state.content.size).unwrap(
+                    onValue = { items ->
+                        val wrappedItems = items.map { ItemWrapper(it, false, null) }
+                        emit(ShowNextContent(wrappedItems))
+                    },
+                    onError = { error ->
+                        emit(ShowNextError(error))
+                    }
+                )
+            }
         }
     }
 
-    private suspend fun CoreactorFlow<InfinityLoadingState>.setItemFavoriteState(itemWrapper: ItemWrapper) {
+    private fun setItemFavoriteState(itemWrapper: ItemWrapper) {
         if (!itemWrapper.isSavingNewFavoriteState) {
             emit(ShowFavoriteItemLoading(itemWrapper))
             val item = itemWrapper.item
-            setFavoriteItemStateInteractor.execute(item, !item.isFavorite).unwrap(
-                onValue = { updatedItem ->
-                    emit(ShowUpdatedItem(updatedItem))
-                },
-                onError = { error ->
-                    emit(ShowFavoriteItemError(itemWrapper, error))
-                }
-            )
+
+            launch {
+                setFavoriteItemStateInteractor.execute(item, !item.isFavorite).unwrap(
+                    onValue = { updatedItem ->
+                        emit(ShowUpdatedItem(updatedItem))
+                    },
+                    onError = { error ->
+                        emit(ShowFavoriteItemError(itemWrapper, error))
+                    }
+                )
+            }
         }
     }
 

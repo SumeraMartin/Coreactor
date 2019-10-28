@@ -16,7 +16,7 @@ class MainCoreactor : Coreactor<MainState>() {
 
     override fun createInitialState() = MainState
 
-    override fun onAction(action: Action<MainState>) = coreactorFlow {
+    override fun onAction(action: Action<MainState>) {
         when (action) {
             SimpleLoadClicked -> {
                 emit(NavigateToSimpleLoad)

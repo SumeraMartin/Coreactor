@@ -11,6 +11,7 @@ import com.sumera.sample.ui.events.contract.OnDispatchToStartedOrThrowAwayClicke
 import com.sumera.sample.ui.events.contract.OnDispatchToStartedOrWaitClicked
 import com.sumera.sample.ui.events.contract.OnEventsDelayChanged
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class EventsShowcaseCoreactor : Coreactor<EventsShowcaseState>() {
 
@@ -18,27 +19,33 @@ class EventsShowcaseCoreactor : Coreactor<EventsShowcaseState>() {
         eventsDelay = 1000
     )
 
-    override fun onLifecycleAction(state: LifecycleState) = coreactorFlow {
+    override fun onLifecycleAction(state: LifecycleState) {
         when (state) {
             LifecycleState.ON_ATTACH -> {
-                emitFrom { EventsShowcaseEvent("ON_ATTACH", EventBehaviour.DISPATCH_TO_STARTED_OR_WAIT) }
+                emit { EventsShowcaseEvent("ON_ATTACH", EventBehaviour.DISPATCH_TO_STARTED_OR_WAIT) }
             }
         }
     }
 
-    override fun onAction(action: Action<EventsShowcaseState>) = coreactorFlow {
+    override fun onAction(action: Action<EventsShowcaseState>) {
         when (action) {
             OnDispatchToStartedOrWaitClicked -> {
-                delay(state.eventsDelay)
-                emitFrom { EventsShowcaseEvent("DISPATCH_TO_STARTED_OR_WAIT", EventBehaviour.DISPATCH_TO_STARTED_OR_WAIT) }
+                launch {
+                    delay(state.eventsDelay)
+                    emit { EventsShowcaseEvent("DISPATCH_TO_STARTED_OR_WAIT", EventBehaviour.DISPATCH_TO_STARTED_OR_WAIT) }
+                }
             }
             OnDispatchToStartedOrThrowAwayClicked -> {
-                delay(state.eventsDelay)
-                emitFrom { EventsShowcaseEvent("DISPATCH_TO_STARTED_OR_THROW_AWAY", EventBehaviour.DISPATCH_TO_STARTED_OR_THROW_AWAY) }
+                launch {
+                    delay(state.eventsDelay)
+                    emit { EventsShowcaseEvent("DISPATCH_TO_STARTED_OR_THROW_AWAY", EventBehaviour.DISPATCH_TO_STARTED_OR_THROW_AWAY) }
+                }
             }
             OnDispatchEveryTimeClicked -> {
-                delay(state.eventsDelay)
-                emitFrom { EventsShowcaseEvent("DISPATCH_EVERY_TIME", EventBehaviour.DISPATCH_EVERY_TIME) }
+                launch {
+                    delay(state.eventsDelay)
+                    emit { EventsShowcaseEvent("DISPATCH_EVERY_TIME", EventBehaviour.DISPATCH_EVERY_TIME) }
+                }
             }
             is OnEventsDelayChanged -> {
                 emitReducer { state -> state.copy(eventsDelay = action.newEventsDelay) }

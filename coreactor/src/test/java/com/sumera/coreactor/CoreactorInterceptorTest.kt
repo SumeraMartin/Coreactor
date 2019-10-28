@@ -13,6 +13,7 @@ import com.sumera.coreactor.testutils.TestableCoreactor
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.coroutines.launch
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.lifecycle.CachingMode
 import org.spekframework.spek2.style.gherkin.Feature
@@ -53,7 +54,7 @@ class CoreactorInterceptorTest : Spek({
             return TestState(initialCounterValue)
         }
 
-        override fun onAction(action: Action<TestState>) = coreactorFlow {
+        override fun onAction(action: Action<TestState>) {
             actionList.add(action)
 
             if (action is InterceptedTestAction) {

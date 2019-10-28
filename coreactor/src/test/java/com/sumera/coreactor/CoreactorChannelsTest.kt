@@ -1,6 +1,5 @@
 package com.sumera.coreactor
 
-import com.sumera.coreactor.contract.EventOrReducer
 import com.sumera.coreactor.contract.action.Action
 import com.sumera.coreactor.contract.event.Event
 import com.sumera.coreactor.contract.reducer.Reducer
@@ -11,10 +10,8 @@ import com.sumera.coreactor.testutils.LifecycleRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
 import com.sumera.coreactor.testutils.TestableCoreactor
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.lifecycle.CachingMode
@@ -52,7 +49,7 @@ class CoreactorChannelsTest : Spek({
             return TestState(initialCounterValue)
         }
 
-        override fun onLifecycleAction(state: LifecycleState): Flow<EventOrReducer<TestState>> {
+        override fun onLifecycleAction(state: LifecycleState) {
             when (state) {
                 LifecycleState.ON_RESUME -> {
                     launch { actionChannel.consumeAsFlow().collect { actionList.add(it) } }
@@ -62,10 +59,9 @@ class CoreactorChannelsTest : Spek({
                     launch { lifecycleChannel.consumeAsFlow().collect { lifecycleList.add(it) } }
                 }
             }
-            return emptyFlow()
         }
 
-        override fun onAction(action: Action<TestState>) = coreactorFlow {
+        override fun onAction(action: Action<TestState>) {
             if (action is TestAction) {
                 emit(TestEvent())
                 emit(TestIncrementReducer())

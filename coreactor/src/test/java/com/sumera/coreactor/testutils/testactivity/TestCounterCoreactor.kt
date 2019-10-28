@@ -3,6 +3,7 @@ package com.sumera.coreactor.testutils.testactivity
 import com.sumera.coreactor.Coreactor
 import com.sumera.coreactor.contract.action.Action
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class TestCounterCoreactor : Coreactor<TestCounterState>() {
 
@@ -10,7 +11,7 @@ class TestCounterCoreactor : Coreactor<TestCounterState>() {
         return TestCounterState(counter = 0)
     }
 
-    override fun onAction(action: Action<TestCounterState>) = coreactorFlow {
+    override fun onAction(action: Action<TestCounterState>) {
         when (action) {
             IncrementAction -> {
                 emit(IncrementReducer)
@@ -19,8 +20,10 @@ class TestCounterCoreactor : Coreactor<TestCounterState>() {
                 emit(DecrementReducer)
             }
             DelayedDecrementAction -> {
-                delay(1000)
-                emit(DecrementReducer)
+                launch {
+                    delay(1000)
+                    emit(DecrementReducer)
+                }
             }
             MultipleDecrementAction -> {
                 emit(DecrementReducer)
