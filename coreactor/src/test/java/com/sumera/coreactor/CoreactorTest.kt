@@ -49,9 +49,17 @@ class CoreactorTest : Spek({
 
     class CancelableAction : Action<TestState>
 
+    class LaunchWhenCreatedAction : Action<TestState>
+
+    class LaunchWhenStartedAction : Action<TestState>
+
+    class LaunchWhenResumedAction : Action<TestState>
+
     data class TriggerEventAction(val message: String, val behaviour: EventBehaviour) : Action<TestState>
 
     data class MessageEvent(val msg: String, override val behaviour: EventBehaviour) : Event<TestState>()
+
+    class TestEvent : Event<TestState>()
 
     class IncrementReducer : Reducer<TestState>() {
         override fun reduce(oldState: TestState): TestState {
@@ -104,6 +112,36 @@ class CoreactorTest : Spek({
                     } catch (error: CancellationException) {
                         wasCanceled = true
                         throw error
+                    }
+                }
+            }
+            if (action is LaunchWhenCreatedAction) {
+                launchWhenCreated {
+                    try {
+                        emit(TestEvent())
+                        delay(1000)
+                    } catch(e: CancellationException) {
+                        wasCanceled = true
+                    }
+                }
+            }
+            if (action is LaunchWhenStartedAction) {
+                launchWhenStarted {
+                    try {
+                        emit(TestEvent())
+                        delay(1000)
+                    } catch(e: CancellationException) {
+                        wasCanceled = true
+                    }
+                }
+            }
+            if (action is LaunchWhenResumedAction) {
+                launchWhenResumed {
+                    try {
+                        emit(TestEvent())
+                        delay(1000)
+                    } catch(e: CancellationException) {
+                        wasCanceled = true
                     }
                 }
             }
@@ -1099,6 +1137,148 @@ class CoreactorTest : Spek({
                     mockLogger.onEventWaitingForCreatedView(MessageEvent(message, EventBehaviour.DISPATCH_EVERY_TIME))
                     mockLogger.onEventDispatchedToView(MessageEvent(message, EventBehaviour.DISPATCH_EVERY_TIME))
                 }
+            }
+        }
+    }
+
+    Feature("launchWhenResumed tests") {
+        Scenario("launchWhenResumed shouldn't be started before coreactor is in resumed state") {
+            When("action is send before resumed state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnStart()
+                coreactor.sendAction(LaunchWhenResumedAction())
+            }
+            Then("launch block shouldn't be started") {
+                assertEquals(0, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenResumed should wait and be started when coreactor is in resumed state") {
+            When("action is send before resumed state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnStart()
+                coreactor.sendAction(LaunchWhenResumedAction())
+                coreactorHelper.fromOnStartToOnResume()
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenResumed should be started immediately if coreactor is already in resumed state") {
+            When("action is send in started state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactor.sendAction(LaunchWhenResumedAction())
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenResumed should be canceled when coreactor will be paused") {
+            When("action is send in resumed state and then state is moved to pause state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactor.sendAction(LaunchWhenResumedAction())
+                coreactorHelper.fromOnResumeToOnPause()
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+            Then("launch block should be canceled") {
+                assertTrue { coreactor.wasCanceled }
+            }
+        }
+    }
+
+    Feature("launchWhenStarted tests") {
+        Scenario("launchWhenStarted shouldn't be started before coreactor is in started state") {
+            When("action is send before started state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnCreate()
+                coreactor.sendAction(LaunchWhenStartedAction())
+            }
+            Then("launch block shouldn't be started") {
+                assertEquals(0, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenStarted should wait and be started when coreactor is in started state") {
+            When("action is send before started state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnCreate()
+                coreactor.sendAction(LaunchWhenStartedAction())
+                coreactorHelper.fromOnCreateToOnStart()
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenStarted should be started immediately if coreactor is already in started state") {
+            When("action is send in started state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnStart()
+                coreactor.sendAction(LaunchWhenStartedAction())
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenStarted should be canceled when coreactor will be stopped") {
+            When("action is send in resumed state and then state is moved to stopped state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactor.sendAction(LaunchWhenStartedAction())
+                coreactorHelper.fromOnResumeToOnStop()
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+            Then("launch block should be canceled") {
+                assertTrue { coreactor.wasCanceled }
+            }
+        }
+    }
+
+    Feature("launchWhenCreated tests") {
+        Scenario("launchWhenCreated shouldn't be started before coreactor is in created state") {
+            When("action is send before created state") {
+                coreactorHelper.attach()
+                coreactor.sendAction(LaunchWhenCreatedAction())
+            }
+            Then("launch block shouldn't be started") {
+                assertEquals(0, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenCreated should wait and be started when coreactor is in created state") {
+            When("action is send before created state") {
+                coreactorHelper.attach()
+                coreactor.sendAction(LaunchWhenCreatedAction())
+                coreactorHelper.fromOnAttachToOnCreate()
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenCreated should be started immediately if coreactor is already in created state") {
+            When("action is send in created state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnCreate()
+                coreactor.sendAction(LaunchWhenCreatedAction())
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+        }
+        Scenario("launchWhenCreated should be canceled when coreactor will be destroyed") {
+            When("action is send in created state and then state is moved to destroyed state") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactor.sendAction(LaunchWhenCreatedAction())
+                coreactorHelper.fromOnResumeToOnDestroy()
+            }
+            Then("launch block should be started") {
+                assertEquals(1, view.eventList.size)
+            }
+            Then("launch block should be canceled") {
+                assertTrue { coreactor.wasCanceled }
             }
         }
     }

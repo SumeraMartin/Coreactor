@@ -19,7 +19,10 @@ import com.sumera.coreactor.internal.Either
 import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.log.CoreactorLogger
 import com.sumera.coreactor.log.implementation.NoOpLogger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BroadcastChannel
@@ -32,6 +35,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, CoroutineScope by MainScope() {
@@ -82,6 +86,8 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     private val lifecycleStateHandler = LifecycleStateHandler()
 
+    private val scopedJobsDispatcher = ScopedJobsDispatcher()
+
     abstract fun createInitialState(): STATE
 
     abstract fun onAction(action: Action<STATE>)
@@ -124,6 +130,18 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     protected open fun onActionException(error: Throwable) {
         throw error
+    }
+
+    protected fun launchWhenResumed(block: suspend () -> Unit) {
+        scopedJobsDispatcher.startOrWaitUntilResumedState(block)
+    }
+
+    protected fun launchWhenStarted(block: suspend () -> Unit) {
+        scopedJobsDispatcher.startOrWaitUntilStartedState(block)
+    }
+
+    protected fun launchWhenCreated(block: suspend () -> Unit) {
+        scopedJobsDispatcher.startOrWaitUntilCreatedState(block)
     }
 
     protected fun onLifecycleException(error: Throwable) {
@@ -389,6 +407,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             currentLifecycleState = lifecycleState
             lifecycleStateChannelInternal.sendBlocking(lifecycleState)
             onLifecycleAction(lifecycleState)
+            scopedJobsDispatcher.onLifecycleState(lifecycleState)
 
             when {
                 currentLifecycleState.isCreateState -> {
@@ -440,6 +459,123 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
                 actionChannelInternal.sendBlocking(interceptedAction)
                 onAction(interceptedAction)
             }
+        }
+    }
+
+    private inner class ScopedJobsDispatcher {
+
+        private val jobsWaitingForCreatedState = mutableListOf<Job>()
+
+        private val jobsWaitingForStartedState = mutableListOf<Job>()
+
+        private val jobsWaitingForResumedState = mutableListOf<Job>()
+
+        private val jobsRunningUntilPausedState = mutableListOf<Job>()
+
+        private val jobsRunningUntilStoppedState = mutableListOf<Job>()
+
+        private val jobsRunningUntilDestroyedState = mutableListOf<Job>()
+
+        fun startOrWaitUntilResumedState(block: suspend () -> Unit) {
+            val job = toLazyJob(block)
+            if (lifecycleState.isInResumedState) {
+                startJobAndAddToRunningJobs(job, cancelWhen = LifecycleState.ON_PAUSE)
+            } else {
+                waitUntilExpectedState(job, startWhen = LifecycleState.ON_RESUME)
+            }
+        }
+
+        fun startOrWaitUntilStartedState(block: suspend () -> Unit) {
+            val job = toLazyJob(block)
+            if (lifecycleState.isInStartedState) {
+                startJobAndAddToRunningJobs(job, cancelWhen = LifecycleState.ON_STOP)
+            } else {
+                waitUntilExpectedState(job, startWhen = LifecycleState.ON_START)
+            }
+        }
+
+        fun startOrWaitUntilCreatedState(block: suspend () -> Unit) {
+            val job = toLazyJob(block)
+            if (lifecycleState.isInCreatedState) {
+                startJobAndAddToRunningJobs(job, cancelWhen = LifecycleState.ON_DESTROY)
+            } else {
+                waitUntilExpectedState(job, startWhen = LifecycleState.ON_CREATE)
+            }
+        }
+
+        fun onLifecycleState(state: LifecycleState) {
+            when (state) {
+                LifecycleState.ON_CREATE -> {
+                    startAllWaitingJobs(forState = LifecycleState.ON_CREATE, cancelWhen = LifecycleState.ON_DESTROY)
+                }
+                LifecycleState.ON_START -> {
+                    startAllWaitingJobs(forState = LifecycleState.ON_START, cancelWhen = LifecycleState.ON_STOP)
+                }
+                LifecycleState.ON_RESUME -> {
+                    startAllWaitingJobs(forState = LifecycleState.ON_RESUME, cancelWhen = LifecycleState.ON_PAUSE)
+                }
+                LifecycleState.ON_PAUSE -> {
+                    cancelAllRunningJobs(forState = LifecycleState.ON_PAUSE)
+                }
+                LifecycleState.ON_STOP -> {
+                    cancelAllRunningJobs(forState = LifecycleState.ON_STOP)
+                }
+                LifecycleState.ON_DESTROY -> {
+                    cancelAllRunningJobs(forState = LifecycleState.ON_DESTROY)
+                }
+                else -> {
+                    // NoOp
+                }
+            }
+        }
+
+        private fun startAllWaitingJobs(forState: LifecycleState, cancelWhen: LifecycleState) {
+            getWaitingJobsListFor(forState).apply {
+                forEach { job ->
+                    startJobAndAddToRunningJobs(job, cancelWhen)
+                }
+                clear()
+            }
+        }
+
+        private fun cancelAllRunningJobs(forState: LifecycleState) {
+            getRunningJobsListFor(forState).apply {
+                forEach { job ->
+                    job.cancel(CancellationException("Coreactor has been stopped"))
+                }
+                clear()
+            }
+        }
+
+        private fun startJobAndAddToRunningJobs(job: Job, cancelWhen: LifecycleState) {
+            job.start()
+            getRunningJobsListFor(cancelWhen).add(job)
+        }
+
+        private fun waitUntilExpectedState(job: Job, startWhen: LifecycleState) {
+            getWaitingJobsListFor(startWhen).add(job)
+        }
+
+        private fun getWaitingJobsListFor(lifecycleState: LifecycleState): MutableList<Job> {
+            return when (lifecycleState) {
+                LifecycleState.ON_CREATE -> jobsWaitingForCreatedState
+                LifecycleState.ON_START -> jobsWaitingForStartedState
+                LifecycleState.ON_RESUME -> jobsWaitingForResumedState
+                else -> throw CoreactorException()
+            }
+        }
+
+        private fun getRunningJobsListFor(lifecycleState: LifecycleState): MutableList<Job> {
+            return when (lifecycleState) {
+                LifecycleState.ON_PAUSE -> jobsRunningUntilPausedState
+                LifecycleState.ON_STOP -> jobsRunningUntilStoppedState
+                LifecycleState.ON_DESTROY -> jobsRunningUntilDestroyedState
+                else -> throw CoreactorException()
+            }
+        }
+
+        private fun toLazyJob(block: suspend () -> Unit): Job {
+            return launch(start = CoroutineStart.LAZY) { block() }
         }
     }
 
