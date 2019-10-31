@@ -118,7 +118,7 @@ class CounterCoreactorFactory : CoreactorFactory<CounterCoreactor>() {
 }  
 ```  
   
-### 7   
+### Step 7   
 The last but not least step is to create a view responsible for rendering the state and handling the events. In this case, it will be an Activity but it can be also a Fragment or some custom implementation of the view.  
   
 ```  
