@@ -13,12 +13,16 @@ class CounterCoreactor : Coreactor<CounterState>() {
         when (action) {
             OnIncrementClicked -> {
                 emit(IncrementReducer)
+                checkDivisibility()
             }
             OnDecrementClicked -> {
                 emit(DecrementReducer)
+                checkDivisibility()
             }
         }
+    }
 
+    private fun checkDivisibility() {
         if (state.counter % 5 == 0 && state.counter != 0) {
             emit(ShowToast("Counter is divisible by 5"))
         }
