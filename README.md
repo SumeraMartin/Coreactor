@@ -45,14 +45,17 @@ object OnDecrementClicked : Action<CounterState>
   
 Define reducers that will transform the previous state of the view to the new state which will be rendered by the view. In this case, reducers will either increment or decrement the current state.
 ```  
-object IncrementReducer : Reducer<CounterState>() {    
-    override fun reduce(oldState: CounterState): CounterState {    
-        return oldState.copy(counter = oldState.counter + 1)    
-} }    
- object DecrementReducer : Reducer<CounterState>() {    
-    override fun reduce(oldState: CounterState): CounterState {    
-        return oldState.copy(counter = oldState.counter - 1)    
-} }  
+object IncrementReducer : Reducer<CounterState>() {
+    override fun reduce(oldState: CounterState): CounterState {
+        return oldState.copy(counter = oldState.counter + 1)
+    }
+}
+
+object DecrementReducer : Reducer<CounterState>() {
+    override fun reduce(oldState: CounterState): CounterState {
+        return oldState.copy(counter = oldState.counter - 1)
+    }
+}
 ```  
   
 Reducers can be also implemented directly in the coreactor as lambda expressions. 
@@ -73,85 +76,85 @@ data class ShowToast(val message: String) : Event<CounterState>()
   
 Create a coreactor that creates an initial state and reacts to actions sent from view by emitting reducers and events. Coreactor implements CoroutineScope so coroutines can be used to perform asynchronous operations.
 ```  
-class CounterCoreactor : Coreactor<CounterState>() {    
+class CounterCoreactor : Coreactor<CounterState>() {
     
-    override fun createInitialState(): CounterState {    
-        return CounterState(counter = 0)    
-    }    
+    override fun createInitialState(): CounterState {
+        return CounterState(counter = 0)
+    }
     
-    override fun onAction(action: Action<CounterState>) = coreactorFlow {    
-        when (action) {    
-            OnIncrementClicked -> {    
+    override fun onAction(action: Action<CounterState>) = coreactorFlow {
+        when (action) {
+            OnIncrementClicked -> {
                 emit(IncrementReducer)
                 if (currentState.counter % 5 == 0) {
-					emit(ShowToast("Divisible by 5"))   
-				}
-            }    
-            OnDecrementClicked -> {    
-                emit(DecrementReducer)    
+                    emit(ShowToast("Divisible by 5"))
+                }
+            }
+            OnDecrementClicked -> {
+                emit(DecrementReducer)
                 if (currentState.counter % 5 == 0) {
-					emit(ShowToast("Divisible by 5"))   
-				}   
+                    emit(ShowToast("Divisible by 5"))
+                }
             }
             SomeActionWhichRequirestheUsageOfCoroutines -> {
-				launch {
-					...
-					delay(1000)
-					emit(ShowToast("Operation is finished"))  
-				}
-			}
-        }    
-    } 
-}  
-```  
+                launch {
+                    ...
+                    delay(1000)
+                    emit(ShowToast("Operation is finished"))
+                }
+            }
+        }
+    }
+}
+```
   
 ### Step 6  
   
 Since coreactor is based on Architecture Components and internally is implemented as ViewModel, it requires an implementation of the factory which is responsible to instantiate ViewModels.
   
-```  
-class CounterCoreactorFactory : CoreactorFactory<CounterCoreactor>() {    
+```
+class CounterCoreactorFactory : CoreactorFactory<CounterCoreactor>() {
     
-    override val coreactor = CounterCoreactor()    
+    override val coreactor = CounterCoreactor()
     
-	override val coreactorClass = CounterCoreactor::class
+    override val coreactorClass = CounterCoreactor::class
 }  
-```  
+```
   
 ### Step 7   
 The last but not least step is to create a view responsible for rendering the state and handling the events. In this case, it will be an Activity but it can be also a Fragment or some custom implementation of the view.  
   
 ```  
-class CounterActivity : CoreactorActivity<CounterState>(), CoreactorView<CounterState> {    
-    
-    override fun layoutRes() = R.layout.activity_counter     
-            
-    override val coreactorFactory = CounterCoreactorFactory()    
-    
-    override val coreactorView = this  
-    
-    override fun onCreate(savedInstanceState: Bundle?) {    
-        super.onCreate(savedInstanceState)    
-    
-        counterView_incrementButton.setOnClickListener {     
-            sendAction(OnIncrementClicked)     
-        }    
-    
-        counterView_decrementButton.setOnClickListener {    
-            sendAction(OnDecrementClicked)    
-        }    
-    }  
+class CounterActivity : CoreactorActivity<CounterState>(), CoreactorView<CounterState> {
 
-	override fun onState(state: CounterState) {
-		 counterView_counterValue.text = state.counter    
-	}    
-      
-    override fun onEvent(event: Event<CounterState>) {    
-        when (event) {    
-            is ShowToast -> {    
-                Toast.makeText(this, event.message, Toast.LENGTH_SHORT).show()    
-            }    
-        }    
-    }     
+    override fun layoutRes() = R.layout.activity_counter
+
+    override val coreactorFactory = CounterCoreactorFactory()
+    
+    override val coreactorView = this
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    
+        counterView_incrementButton.setOnClickListener {
+            sendAction(OnIncrementClicked)
+        }
+
+        counterView_decrementButton.setOnClickListener {
+            sendAction(OnDecrementClicked)
+        }
+    }
+
+    override fun onState(state: CounterState) {
+        counterView_counterValue.text = state.counter
+    }
+
+    override fun onEvent(event: Event<CounterState>) {
+        when (event) {
+            is ShowToast -> {
+                Toast.makeText(this, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }
 ```
