@@ -13,7 +13,6 @@ import com.sumera.coreactor.testutils.TestableCoreactor
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.launch
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.lifecycle.CachingMode
 import org.spekframework.spek2.style.gherkin.Feature

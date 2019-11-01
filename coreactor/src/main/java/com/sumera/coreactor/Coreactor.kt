@@ -22,6 +22,7 @@ import com.sumera.coreactor.log.implementation.NoOpLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -112,7 +113,9 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
         actionHandler.dispatchAction(action)
     }
+    //endregion
 
+    //region Overrides
     @OnLifecycleEvent(Lifecycle.Event.ON_ANY)
     protected fun onAny(@Suppress("UNUSED_PARAMETER") source: LifecycleOwner, event: Lifecycle.Event) {
         val lifecycleState = LifecycleState.fromLifecycle(event)
@@ -123,7 +126,9 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         lifecycleStateHandler.dispatchLifecycleState(LifecycleState.ON_DETACH)
         cancelActiveCoroutines()
     }
+    //endregion
 
+    //region Protected methods
     protected open fun onLifecycleAction(state: LifecycleState) {
         // NoOp
     }
@@ -159,9 +164,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     protected fun emitReducer(reducerBlock: (STATE) -> STATE) = apply {
         emit(reducer(reducerBlock))
     }
-    //endregion
 
-    //region Protected extensions
     protected fun coreactorFlow(block: suspend FlowCollector<EventOrReducer<STATE>>.() -> Unit): Flow<EventOrReducer<STATE>> {
         return flow(block)
     }
@@ -170,10 +173,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return ActionReducer { state -> reducerBlock(state) }
     }
 
+    @FlowPreview
     protected suspend fun waitUntilState(state: STATE): STATE {
         return waitUntilState { it == state }
     }
 
+    @FlowPreview
     protected suspend fun waitUntilState(predicate: suspend (STATE) -> Boolean): STATE {
         var resultState: STATE? = null
         stateChannel.consumeAsFlow().filter(predicate).take(1).collect { state ->
@@ -182,10 +187,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return resultState ?: throw CoreactorException()
     }
 
+    @FlowPreview
     protected suspend fun waitUntilReducer(action: Reducer<STATE>): Reducer<STATE> {
         return waitUntilReducer { it == action }
     }
 
+    @FlowPreview
     protected suspend fun waitUntilReducer(predicate: suspend (Reducer<STATE>) -> Boolean): Reducer<STATE> {
         var resultReducer: Reducer<STATE>? = null
         reducerChannel.consumeAsFlow().filter(predicate).take(1).collect { reducer ->
@@ -194,10 +201,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return resultReducer ?: throw CoreactorException()
     }
 
+    @FlowPreview
     protected suspend fun waitUntilEvent(event: Event<STATE>): Event<STATE> {
         return waitUntilEvent { it == event }
     }
 
+    @FlowPreview
     protected suspend fun waitUntilEvent(predicate: suspend (Event<STATE>) -> Boolean): Event<STATE> {
         var resultEvent: Event<STATE>? = null
         eventChannel.consumeAsFlow().filter(predicate).take(1).collect { event ->
@@ -206,10 +215,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return resultEvent ?: throw CoreactorException()
     }
 
+    @FlowPreview
     protected suspend fun waitUntilAction(action: Action<STATE>): Action<STATE> {
         return waitUntilAction { it == action }
     }
 
+    @FlowPreview
     protected suspend fun waitUntilAction(predicate: suspend (Action<STATE>) -> Boolean): Action<STATE> {
         var resultAction: Action<STATE>? = null
         actionChannel.consumeAsFlow().filter(predicate).take(1).collect { action ->
@@ -218,10 +229,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return resultAction ?: throw CoreactorException()
     }
 
+    @FlowPreview
     protected suspend fun waitUntilLifecycle(state: LifecycleState) {
         waitUntilLifecycle { it == state }
     }
 
+    @FlowPreview
     protected suspend fun waitUntilLifecycle(predicate: suspend (LifecycleState) -> Boolean) {
         lifecycleChannel.consumeAsFlow().filter(predicate).take(1).collect()
     }
@@ -233,12 +246,12 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     }
 
     private fun dispatchEventOrReducer(eventOrReducer: EventOrReducer<STATE>) {
-        when (val eventOrReducer = eventOrReducer.toEither) {
+        when (val either = eventOrReducer.toEither) {
             is Either.Left -> {
-                reducerHandler.dispatchReducer(eventOrReducer.value)
+                reducerHandler.dispatchReducer(either.value)
             }
             is Either.Right -> {
-                eventHandler.dispatchEvent(eventOrReducer.value)
+                eventHandler.dispatchEvent(either.value)
             }
         }
     }
