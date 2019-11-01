@@ -10,6 +10,7 @@ import com.sumera.coreactor.log.CoreactorLogger
 import com.sumera.coreactor.testutils.CoreactorTestHelper
 import com.sumera.coreactor.testutils.CoroutineRule
 import com.sumera.coreactor.testutils.LifecycleRule
+import com.sumera.coreactor.testutils.MainThreadCheckRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
 import com.sumera.coreactor.testutils.TestableCoreactor
@@ -74,6 +75,8 @@ class CoreactorTest : Spek({
         var createInitialStateCalledCount = 0
 
         var wasCanceled = false
+
+        var expectedException: Throwable? = null
 
         override val logger = mockLogger
 
@@ -161,11 +164,13 @@ class CoreactorTest : Spek({
     val coreactor: TestCoreactor by memoized(CachingMode.EACH_GROUP) { TestCoreactor(mockLogger) }
     val coroutineRule = CoroutineRule()
     val lifecycleRule = LifecycleRule()
+    val mainThreadCheckRule = MainThreadCheckRule()
 
     lateinit var coreactorHelper: CoreactorTestHelper<TestState>
     beforeEachGroup {
         coroutineRule.setUp()
         lifecycleRule.setUp()
+        mainThreadCheckRule.setUp()
     }
 
     beforeEachTest {
@@ -175,6 +180,7 @@ class CoreactorTest : Spek({
     afterEachGroup {
         lifecycleRule.tearDown()
         coroutineRule.tearDown()
+        mainThreadCheckRule.tearDown()
     }
 
     Feature("Coreactor state before attach view") {
@@ -200,13 +206,10 @@ class CoreactorTest : Spek({
     }
 
     Feature("Coreactor state after attach view") {
-        beforeEachTest {
-            coreactorHelper.attach()
-        }
-
         Scenario("accessing state") {
             lateinit var state: TestState
             When("state is accessed") {
+                coreactorHelper.attach()
                 state = coreactor.testGetState()
             }
             Then("should be equals to initial state") {
@@ -216,6 +219,7 @@ class CoreactorTest : Spek({
         Scenario("accessing lifecycle state") {
             lateinit var result: LifecycleState
             When("lifecycle state is accessed") {
+                coreactorHelper.attach()
                 result = coreactor.testGetLifecycle()
             }
             Then("should be equals to ATTACHED state") {

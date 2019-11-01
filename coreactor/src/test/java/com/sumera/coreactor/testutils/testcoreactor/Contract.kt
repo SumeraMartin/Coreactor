@@ -1,4 +1,4 @@
-package com.sumera.coreactor.testutils.testactivity
+package com.sumera.coreactor.testutils.testcoreactor
 
 import com.sumera.coreactor.contract.action.Action
 import com.sumera.coreactor.contract.event.Event

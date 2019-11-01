@@ -1,4 +1,4 @@
-package com.sumera.coreactor.testutils.testactivity
+package com.sumera.coreactor.testutils.testcoreactor
 
 import com.sumera.coreactor.Coreactor
 import com.sumera.coreactor.contract.action.Action
@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 class TestCounterCoreactor : Coreactor<TestCounterState>() {
 
     override fun createInitialState(): TestCounterState {
+
         return TestCounterState(counter = 0)
     }
 
@@ -31,7 +32,12 @@ class TestCounterCoreactor : Coreactor<TestCounterState>() {
                 emit(DecrementReducer)
             }
             is SendEventAction -> {
-                emit(TestEvent(action.message, action.behavior))
+                emit(
+                    TestEvent(
+                        action.message,
+                        action.behavior
+                    )
+                )
             }
         }
     }

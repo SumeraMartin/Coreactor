@@ -5,14 +5,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.sumera.coreactor.contract.event.EventBehaviour
 import com.sumera.coreactor.testutils.CoroutineRule
-import com.sumera.coreactor.testutils.testfragment.DecrementAction
-import com.sumera.coreactor.testutils.testfragment.DelayedDecrementAction
-import com.sumera.coreactor.testutils.testfragment.IncrementAction
-import com.sumera.coreactor.testutils.testfragment.MultipleDecrementAction
-import com.sumera.coreactor.testutils.testfragment.SendEventAction
+import com.sumera.coreactor.testutils.testcoreactor.DecrementAction
+import com.sumera.coreactor.testutils.testcoreactor.DelayedDecrementAction
+import com.sumera.coreactor.testutils.testcoreactor.IncrementAction
+import com.sumera.coreactor.testutils.testcoreactor.MultipleDecrementAction
+import com.sumera.coreactor.testutils.testcoreactor.SendEventAction
+import com.sumera.coreactor.testutils.testcoreactor.TestCounterState
+import com.sumera.coreactor.testutils.testcoreactor.TestEvent
 import com.sumera.coreactor.testutils.testfragment.TestCounterFragment
-import com.sumera.coreactor.testutils.testfragment.TestCounterState
-import com.sumera.coreactor.testutils.testfragment.TestEvent
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.After
@@ -46,7 +46,11 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(0))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        0
+                    )
+                )
             }
         }
     }
@@ -65,8 +69,16 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(0))
-                fragment.mockView.onState(TestCounterState(1))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        0
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        1
+                    )
+                )
             }
         }
     }
@@ -88,11 +100,31 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(0))
-                fragment.mockView.onState(TestCounterState(1))
-                fragment.mockView.onState(TestCounterState(2))
-                fragment.mockView.onState(TestCounterState(3))
-                fragment.mockView.onState(TestCounterState(2))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        0
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        1
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        2
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        3
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        2
+                    )
+                )
             }
         }
     }
@@ -111,10 +143,26 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(0))
-                fragment.mockView.onState(TestCounterState(-1))
-                fragment.mockView.onState(TestCounterState(-2))
-                fragment.mockView.onState(TestCounterState(-3))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        0
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        -1
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        -2
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        -3
+                    )
+                )
             }
         }
     }
@@ -136,10 +184,26 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(0))
-                fragment.mockView.onState(TestCounterState(1))
-                fragment.mockView.onState(TestCounterState(2))
-                fragment.mockView.onState(TestCounterState(1))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        0
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        1
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        2
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        1
+                    )
+                )
             }
         }
     }
@@ -152,13 +216,23 @@ class CoreactorFragmentTest {
 
         // WHEN
         scenario.onFragment { fragment ->
-            fragment.action(SendEventAction("message", EventBehaviour.DISPATCH_EVERY_TIME))
+            fragment.action(
+                SendEventAction(
+                    "message",
+                    EventBehaviour.DISPATCH_EVERY_TIME
+                )
+            )
         }
 
         // THEN
         scenario.onFragment { fragment ->
             verify {
-                fragment.mockView.onEvent(TestEvent("message", EventBehaviour.DISPATCH_EVERY_TIME))
+                fragment.mockView.onEvent(
+                    TestEvent(
+                        "message",
+                        EventBehaviour.DISPATCH_EVERY_TIME
+                    )
+                )
             }
         }
     }
@@ -177,7 +251,11 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(1))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        1
+                    )
+                )
             }
         }
     }
@@ -198,8 +276,16 @@ class CoreactorFragmentTest {
         // THEN
         scenario.onFragment { fragment ->
             verifySequence {
-                fragment.mockView.onState(TestCounterState(1))
-                fragment.mockView.onState(TestCounterState(0))
+                fragment.mockView.onState(
+                    TestCounterState(
+                        1
+                    )
+                )
+                fragment.mockView.onState(
+                    TestCounterState(
+                        0
+                    )
+                )
             }
         }
     }

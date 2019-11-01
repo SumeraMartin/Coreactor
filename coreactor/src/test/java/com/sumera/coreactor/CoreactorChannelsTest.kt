@@ -7,6 +7,7 @@ import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.testutils.CoreactorTestHelper
 import com.sumera.coreactor.testutils.CoroutineRule
 import com.sumera.coreactor.testutils.LifecycleRule
+import com.sumera.coreactor.testutils.MainThreadCheckRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
 import com.sumera.coreactor.testutils.TestableCoreactor
@@ -73,11 +74,13 @@ class CoreactorChannelsTest : Spek({
     val coreactor: TestCoreactor by memoized(CachingMode.EACH_GROUP) { TestCoreactor() }
     val coroutineRule = CoroutineRule()
     val lifecycleRule = LifecycleRule()
+    val mainThreadCheckRule = MainThreadCheckRule()
 
     lateinit var coreactorHelper: CoreactorTestHelper<TestState>
     beforeEachGroup {
         coroutineRule.setUp()
         lifecycleRule.setUp()
+        mainThreadCheckRule.setUp()
     }
 
     beforeEachTest {
@@ -85,6 +88,7 @@ class CoreactorChannelsTest : Spek({
     }
 
     afterEachGroup {
+        mainThreadCheckRule.tearDown()
         lifecycleRule.tearDown()
         coroutineRule.tearDown()
     }
