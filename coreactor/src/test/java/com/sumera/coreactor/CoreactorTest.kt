@@ -74,6 +74,8 @@ class CoreactorTest : Spek({
 
         val lifecycleStateList = mutableListOf<LifecycleState>()
 
+        val stateList = mutableListOf<TestState>()
+
         var createInitialStateCalledCount = 0
 
         var wasCanceled = false
@@ -85,6 +87,10 @@ class CoreactorTest : Spek({
         override fun createInitialState(): TestState {
             createInitialStateCalledCount += 1
             return TestState(initialCounterValue)
+        }
+
+        override fun onState(state: TestState) {
+            stateList.add(state)
         }
 
         override fun onLifecycleState(state: LifecycleState) {
@@ -1321,6 +1327,43 @@ class CoreactorTest : Spek({
                 assertEquals(LifecycleState.ON_STOP, coreactor.lifecycleStateList[5])
                 assertEquals(LifecycleState.ON_DESTROY, coreactor.lifecycleStateList[6])
                 assertEquals(LifecycleState.ON_DETACH, coreactor.lifecycleStateList[7])
+            }
+        }
+    }
+
+    Feature("onState") {
+        Scenario("is called for initial state") {
+            When("coreactor is attached") {
+                coreactorHelper.attach()
+            }
+            Then("onState receives initial state") {
+                assertEquals(1, coreactor.stateList.size)
+                assertEquals(TestState(initialCounterValue), coreactor.stateList[0])
+            }
+        }
+
+        Scenario("is called after state change before started view") {
+            When("coreactor is attached and then action is send") {
+                coreactorHelper.attach()
+                coreactor.sendAction(IncrementAction())
+            }
+            Then("onState receives initial state and changed state") {
+                assertEquals(2, coreactor.stateList.size)
+                assertEquals(TestState(initialCounterValue), coreactor.stateList[0])
+                assertEquals(TestState(initialCounterValue + 1), coreactor.stateList[1])
+            }
+        }
+
+        Scenario("is called after state change after started view") {
+            When("coreactor is attached and then action is send") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactor.sendAction(IncrementAction())
+            }
+            Then("onState receives initial state and changed state") {
+                assertEquals(2, coreactor.stateList.size)
+                assertEquals(TestState(initialCounterValue), coreactor.stateList[0])
+                assertEquals(TestState(initialCounterValue + 1), coreactor.stateList[1])
             }
         }
     }

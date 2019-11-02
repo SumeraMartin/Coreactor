@@ -134,6 +134,10 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     //endregion
 
     //region Protected methods
+    protected open fun onState(state: STATE) {
+        // NoOp
+    }
+
     protected open fun onLifecycleState(state: LifecycleState) {
         // NoOp
     }
@@ -402,6 +406,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             logger.onNewStateReceived(state)
             currentStateInternal = state
             stateChannelInternal.sendBlocking(state)
+            onState(state)
         }
 
         private fun dispatchStateToViewNow(state: STATE) {
