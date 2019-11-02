@@ -9,3 +9,5 @@ object NavigateToEventsShowcase : Event<MainState>()
 object NavigateToInfinityLoading : Event<MainState>()
 
 object NavigateToCounter : Event<MainState>()
+
+object NavigateToScoped : Event<MainState>()

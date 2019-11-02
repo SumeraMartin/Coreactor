@@ -9,7 +9,9 @@ import com.sumera.sample.ui.main.contract.MainState
 import com.sumera.sample.ui.main.contract.NavigateToCounter
 import com.sumera.sample.ui.main.contract.NavigateToEventsShowcase
 import com.sumera.sample.ui.main.contract.NavigateToInfinityLoading
+import com.sumera.sample.ui.main.contract.NavigateToScoped
 import com.sumera.sample.ui.main.contract.NavigateToSimpleLoad
+import com.sumera.sample.ui.main.contract.ScopedClicked
 import com.sumera.sample.ui.main.contract.SimpleLoadClicked
 
 class MainCoreactor : Coreactor<MainState>() {
@@ -29,6 +31,9 @@ class MainCoreactor : Coreactor<MainState>() {
             }
             CounterClicked -> {
                 emit(NavigateToCounter)
+            }
+            ScopedClicked -> {
+                emit(NavigateToScoped)
             }
         }
     }

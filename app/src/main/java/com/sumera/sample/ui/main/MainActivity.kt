@@ -15,8 +15,11 @@ import com.sumera.sample.ui.main.contract.MainState
 import com.sumera.sample.ui.main.contract.NavigateToCounter
 import com.sumera.sample.ui.main.contract.NavigateToEventsShowcase
 import com.sumera.sample.ui.main.contract.NavigateToInfinityLoading
+import com.sumera.sample.ui.main.contract.NavigateToScoped
 import com.sumera.sample.ui.main.contract.NavigateToSimpleLoad
+import com.sumera.sample.ui.main.contract.ScopedClicked
 import com.sumera.sample.ui.main.contract.SimpleLoadClicked
+import com.sumera.sample.ui.scoped.ScopedActivity
 import com.sumera.sample.ui.simpleload.SimpleLoadActivity
 import kotlinx.android.synthetic.main.content_main.*
 
@@ -43,6 +46,9 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
         main_counter.setOnClickListener {
             sendAction { CounterClicked }
         }
+        main_scoped.setOnClickListener {
+            sendAction { ScopedClicked }
+        }
     }
 
     override fun onState(state: MainState) {
@@ -62,6 +68,9 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
             }
             NavigateToCounter -> {
                 startActivity(CounterActivity.getIntent(this))
+            }
+            NavigateToScoped -> {
+                startActivity(ScopedActivity.getIntent(this))
             }
         }
     }

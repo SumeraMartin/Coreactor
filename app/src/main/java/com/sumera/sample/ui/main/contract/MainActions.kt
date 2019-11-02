@@ -9,3 +9,5 @@ object EventsShowcaseClicked : Action<MainState>
 object InfinityLoadingClicked : Action<MainState>
 
 object CounterClicked : Action<MainState>
+
+object ScopedClicked : Action<MainState>
