@@ -134,7 +134,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     //endregion
 
     //region Protected methods
-    protected open fun onLifecycleAction(state: LifecycleState) {
+    protected open fun onLifecycleState(state: LifecycleState) {
         // NoOp
     }
 
@@ -427,7 +427,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
             currentLifecycleState = lifecycleState
             lifecycleStateChannelInternal.sendBlocking(lifecycleState)
-            onLifecycleAction(lifecycleState)
+            onLifecycleState(lifecycleState)
             scopedJobsDispatcher.onLifecycleState(lifecycleState)
 
             when {

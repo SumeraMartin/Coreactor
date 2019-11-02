@@ -50,7 +50,7 @@ class CoreactorChannelsTest : Spek({
             return TestState(initialCounterValue)
         }
 
-        override fun onLifecycleAction(state: LifecycleState) {
+        override fun onLifecycleState(state: LifecycleState) {
             when (state) {
                 LifecycleState.ON_RESUME -> {
                     launch { actionChannel.consumeAsFlow().collect { actionList.add(it) } }

@@ -19,7 +19,7 @@ class EventsShowcaseCoreactor : Coreactor<EventsShowcaseState>() {
         eventsDelay = 1000
     )
 
-    override fun onLifecycleAction(state: LifecycleState) {
+    override fun onLifecycleState(state: LifecycleState) {
         when (state) {
             LifecycleState.ON_ATTACH -> {
                 emit { EventsShowcaseEvent("ON_ATTACH", EventBehaviour.DISPATCH_TO_STARTED_OR_WAIT) }

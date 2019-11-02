@@ -20,7 +20,7 @@ class ScopedCoreactor(private val timer: Timer) : Coreactor<ScopedState>() {
         timeInStartedState = 0.0
     )
 
-    override fun onLifecycleAction(state: LifecycleState) {
+    override fun onLifecycleState(state: LifecycleState) {
         when (state) {
             LifecycleState.ON_CREATE -> launchWhenCreated {
                 while(true) {

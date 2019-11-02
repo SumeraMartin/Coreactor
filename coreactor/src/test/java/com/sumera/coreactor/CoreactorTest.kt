@@ -72,6 +72,8 @@ class CoreactorTest : Spek({
 
         val actionList = mutableListOf<Action<TestState>>()
 
+        val lifecycleStateList = mutableListOf<LifecycleState>()
+
         var createInitialStateCalledCount = 0
 
         var wasCanceled = false
@@ -83,6 +85,10 @@ class CoreactorTest : Spek({
         override fun createInitialState(): TestState {
             createInitialStateCalledCount += 1
             return TestState(initialCounterValue)
+        }
+
+        override fun onLifecycleState(state: LifecycleState) {
+            lifecycleStateList.add(state)
         }
 
         override fun onAction(action: Action<TestState>) {
@@ -1283,6 +1289,38 @@ class CoreactorTest : Spek({
             }
             Then("launch block should be canceled") {
                 assertTrue { coreactor.wasCanceled }
+            }
+        }
+    }
+
+    Feature("onLifecycleState") {
+        Scenario("is called for attached view") {
+            When("coreactor is attached") {
+                coreactorHelper.attach()
+            }
+            Then("onLifecycleState receives ON_ATTACH") {
+                assertEquals(1, coreactor.lifecycleStateList.size)
+                assertEquals(LifecycleState.ON_ATTACH, coreactor.lifecycleStateList[0])
+            }
+        }
+
+        Scenario("is called for all lifecycle stated") {
+            When("coreactor is attached, resumed and detached") {
+                coreactorHelper.attach()
+                coreactorHelper.fromOnAttachToOnResume()
+                coreactorHelper.fromOnResumeToOnDestroy()
+                coreactorHelper.detachWithFinishing()
+            }
+            Then("onLifecycleState receives all lifecycle states") {
+                assertEquals(8, coreactor.lifecycleStateList.size)
+                assertEquals(LifecycleState.ON_ATTACH, coreactor.lifecycleStateList[0])
+                assertEquals(LifecycleState.ON_CREATE, coreactor.lifecycleStateList[1])
+                assertEquals(LifecycleState.ON_START, coreactor.lifecycleStateList[2])
+                assertEquals(LifecycleState.ON_RESUME, coreactor.lifecycleStateList[3])
+                assertEquals(LifecycleState.ON_PAUSE, coreactor.lifecycleStateList[4])
+                assertEquals(LifecycleState.ON_STOP, coreactor.lifecycleStateList[5])
+                assertEquals(LifecycleState.ON_DESTROY, coreactor.lifecycleStateList[6])
+                assertEquals(LifecycleState.ON_DETACH, coreactor.lifecycleStateList[7])
             }
         }
     }

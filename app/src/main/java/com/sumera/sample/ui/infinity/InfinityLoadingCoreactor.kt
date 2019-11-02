@@ -38,7 +38,7 @@ class InfinityLoadingCoreactor(
         )
     )
 
-    override fun onLifecycleAction(state: LifecycleState) {
+    override fun onLifecycleState(state: LifecycleState) {
         when (state) {
             LifecycleState.ON_START -> {
                 loadInitialData()
