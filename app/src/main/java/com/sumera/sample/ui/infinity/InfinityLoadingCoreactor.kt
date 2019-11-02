@@ -41,7 +41,7 @@ class InfinityLoadingCoreactor(
     override fun onLifecycleState(state: LifecycleState) {
         when (state) {
             LifecycleState.ON_START -> {
-                loadInitialData()
+                loadInitialDataWhenViewIsStarted()
             }
         }
     }
@@ -49,13 +49,13 @@ class InfinityLoadingCoreactor(
     override fun onAction(action: Action<InfinityLoadingState>) {
         when (action) {
             OnRetryLoading -> {
-                loadInitialData()
+                loadInitialDataWhenRetryIsClicked()
             }
             OnRetryLoadingNext -> {
-                loadNextData()
+                loadNextDataWhenRetryIsClicked()
             }
             OnBottomReached -> {
-                loadNextData()
+                loadNextDataWhenReachedBottom()
             }
             is OnItemFavoriteClicked -> {
                 setItemFavoriteState(action.item)
@@ -63,39 +63,59 @@ class InfinityLoadingCoreactor(
         }
     }
 
-    private fun loadInitialData() {
-        if (state.canLoadInitialData) {
-            emit(ShowLoading)
+    private fun loadInitialDataWhenViewIsStarted() {
+        if (state.canLoadInitialDataWhenViewIsStarted) {
+            loadInitialData()
+        }
+    }
 
-            launch {
-                getItemsInteractor.execute(0).unwrap(
-                    onValue = { value ->
-                        val wrappedItems = value.map { ItemWrapper(it, false, null) }
-                        emit(ShowContent(wrappedItems))
-                    },
-                    onError = { error ->
-                        emit(ShowError(error))
-                    }
-                )
-            }
+    private fun loadInitialDataWhenRetryIsClicked() {
+        if (state.canLoadInitialDataWhenRetryIsClicked) {
+            loadInitialData()
+        }
+    }
+
+    private fun loadInitialData() {
+        emit(ShowLoading)
+
+        launch {
+            getItemsInteractor.execute(0).unwrap(
+                onValue = { value ->
+                    val wrappedItems = value.map { ItemWrapper(it, false, null) }
+                    emit(ShowContent(wrappedItems))
+                },
+                onError = { error ->
+                    emit(ShowError(error))
+                }
+            )
+        }
+    }
+
+    private fun loadNextDataWhenRetryIsClicked() {
+        if (state.canLoadNextItemsWhenRetryIsClicked) {
+            loadNextData()
+        }
+    }
+
+    private fun loadNextDataWhenReachedBottom() {
+        if (state.canLoadNextItemsWhenBottomIsReached) {
+            loadNextData()
         }
     }
 
     private fun loadNextData() {
-        if (state.canLoadNextItems) {
-            emit(ShowNextLoading)
+        emit(ShowNextLoading)
 
-            launch {
-                getItemsInteractor.execute(state.content.size).unwrap(
-                    onValue = { items ->
-                        val wrappedItems = items.map { ItemWrapper(it, false, null) }
-                        emit(ShowNextContent(wrappedItems))
-                    },
-                    onError = { error ->
-                        emit(ShowNextError(error))
-                    }
-                )
-            }
+        launch {
+            getItemsInteractor.execute(state.content.size).unwrap(
+                onValue = { items ->
+                    val wrappedItems = items.map { ItemWrapper(it, false, null) }
+                    emit(ShowNextContent(wrappedItems))
+                },
+                onError = { error ->
+                    emit(ShowNextError(error))
+                }
+            )
         }
     }
 
@@ -117,11 +137,19 @@ class InfinityLoadingCoreactor(
         }
     }
 
-    private val InfinityLoadingState.canLoadInitialData: Boolean get() {
+    private val InfinityLoadingState.canLoadInitialDataWhenViewIsStarted: Boolean get() {
         return content.isEmpty() && !isLoading && error == null
     }
 
-    private val InfinityLoadingState.canLoadNextItems: Boolean get() {
-        return !canLoadInitialData && !nextItemsState.isLoading && nextItemsState.error == null
+    private val InfinityLoadingState.canLoadInitialDataWhenRetryIsClicked: Boolean get() {
+        return content.isEmpty() && !isLoading && error != null
+    }
+
+    private val InfinityLoadingState.canLoadNextItemsWhenRetryIsClicked: Boolean get() {
+        return !isLoading && error == null && !nextItemsState.isLoading && nextItemsState.error != null
+    }
+
+    private val InfinityLoadingState.canLoadNextItemsWhenBottomIsReached: Boolean get() {
+        return !isLoading && error == null && !nextItemsState.isLoading && nextItemsState.error == null
     }
 }

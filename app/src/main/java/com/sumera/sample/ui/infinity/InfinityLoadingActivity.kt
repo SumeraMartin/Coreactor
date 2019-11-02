@@ -12,6 +12,7 @@ import com.sumera.sample.ui.infinity.adapter.InfinityLoadingAdapter
 import com.sumera.sample.ui.infinity.contract.InfinityLoadingState
 import com.sumera.sample.ui.infinity.contract.OnBottomReached
 import com.sumera.sample.ui.infinity.contract.OnItemFavoriteClicked
+import com.sumera.sample.ui.infinity.contract.OnRetryLoading
 import com.sumera.sample.ui.infinity.contract.OnRetryLoadingNext
 import kotlinx.android.synthetic.main.activity_infinity.*
 
@@ -36,6 +37,7 @@ class InfinityLoadingActivity : CoreactorActivity<InfinityLoadingState>(), Corea
 
         infinity_recycler.layoutManager = LinearLayoutManager(this)
         infinity_recycler.adapter = adapter
+        infinity_placeholder.setOnClickListener { sendAction(OnRetryLoading) }
         adapter.onItemClickListener = { sendAction(OnItemFavoriteClicked(it)) }
         adapter.onRetryLoadingClickLister = { sendAction(OnRetryLoadingNext) }
         adapter.onLastItemIsShown = { sendAction(OnBottomReached) }
