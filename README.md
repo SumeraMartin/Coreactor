@@ -1,4 +1,5 @@
 [![Build Status](https://app.bitrise.io/app/f2af7ee280d7331e/status.svg?token=OSoznIWwGIU1j6J9DLyxng)](https://app.bitrise.io/app/f2af7ee280d7331e)
+[![](https://jitpack.io/v/SumeraMartin/coreactor.svg)](https://jitpack.io/#SumeraMartin/coreactor)
 
 # Coreactor 
 
@@ -25,7 +26,19 @@ The previous version of this library was using RxJava but implementation with co
 
 ## Setup
   
-TODO  
+```
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+```
+dependencies {
+    implementation 'com.github.sumeramartin:coreactor:0.0.1'
+}
+```
   
 ## Sample  
   
