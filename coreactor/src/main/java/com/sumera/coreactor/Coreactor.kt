@@ -262,8 +262,8 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         }
     }
 
-    private fun <E> BroadcastChannel<E>.sendBlocking(value: E) {
-        runBlocking { send(value) }
+    private fun <E> SendChannel<E>.sendInLaunchBlock(value: E) {
+        launch { send(value) }
     }
     //endregion
 
@@ -336,7 +336,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         private fun dispatchNow(event: Event<STATE>) {
             logger.onEventDispatchedToView(event)
-            eventChannelInternal.sendBlocking(event)
+            eventChannelInternal.sendInLaunchBlock(event)
             viewHandler.getViewOrThrow().onEvent(event)
         }
 
@@ -402,7 +402,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         private fun setCurrentState(state: STATE) {
             logger.onNewStateReceived(state)
             currentStateInternal = state
-            stateChannelInternal.sendBlocking(state)
+            stateChannelInternal.sendInLaunchBlock(state)
             onState(state)
         }
 
@@ -428,7 +428,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             logger.onLifecycle(lifecycleState)
 
             currentLifecycleState = lifecycleState
-            lifecycleStateChannelInternal.sendBlocking(lifecycleState)
+            lifecycleStateChannelInternal.sendInLaunchBlock(lifecycleState)
             onLifecycleState(lifecycleState)
             scopedJobsDispatcher.onLifecycleState(lifecycleState)
 
@@ -462,7 +462,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             val newState = interceptedReducer.reduce(oldState)
 
             logger.onReducer(oldState, interceptedReducer, newState)
-            reducerChannelInternal.sendBlocking(interceptedReducer)
+            reducerChannelInternal.sendInLaunchBlock(interceptedReducer)
             stateHandler.dispatchStateIfPossible(newState)
         }
     }
@@ -479,7 +479,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
             val interceptedAction = interceptor.onInterceptAction(action)
             if (interceptedAction != null) {
                 logger.onAction(interceptedAction)
-                actionChannelInternal.sendBlocking(interceptedAction)
+                actionChannelInternal.sendInLaunchBlock(interceptedAction)
                 onAction(interceptedAction)
             }
         }
