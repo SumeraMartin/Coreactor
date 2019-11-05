@@ -17,10 +17,13 @@ import com.sumera.sample.ui.main.contract.NavigateToEventsShowcase
 import com.sumera.sample.ui.main.contract.NavigateToInfinityLoading
 import com.sumera.sample.ui.main.contract.NavigateToScoped
 import com.sumera.sample.ui.main.contract.NavigateToSimpleLoad
+import com.sumera.sample.ui.main.contract.NavigateToWaitUntil
 import com.sumera.sample.ui.main.contract.ScopedClicked
 import com.sumera.sample.ui.main.contract.SimpleLoadClicked
+import com.sumera.sample.ui.main.contract.WaitUntilClicked
 import com.sumera.sample.ui.scoped.ScopedActivity
 import com.sumera.sample.ui.simpleload.SimpleLoadActivity
+import com.sumera.sample.ui.waituntil.WaitUntilActivity
 import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
@@ -49,6 +52,9 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
         main_scoped.setOnClickListener {
             sendAction { ScopedClicked }
         }
+        main_waitUntil.setOnClickListener {
+            sendAction { WaitUntilClicked }
+        }
     }
 
     override fun onState(state: MainState) {
@@ -71,6 +77,9 @@ class MainActivity : CoreactorActivity<MainState>(), CoreactorView<MainState> {
             }
             NavigateToScoped -> {
                 startActivity(ScopedActivity.getIntent(this))
+            }
+            NavigateToWaitUntil -> {
+                startActivity(WaitUntilActivity.getIntent(this))
             }
         }
     }

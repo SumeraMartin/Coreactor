@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".ui.waituntil.WaitUntilActivity"
+    tools:showIn="@layout/activity_wait_until">
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/waitUntil_first"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="First Button"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintBottom_toTopOf="@+id/waitUntil_second"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/waitUntil_second"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Second Button"
+        app:layout_constraintBottom_toTopOf="@+id/waitUntil_third"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/waitUntil_first" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/waitUntil_third"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Third Button"
+        app:layout_constraintBottom_toTopOf="@+id/waitUntil_confirmTitle"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/waitUntil_second" />
+
+    <TextView
+        android:id="@+id/waitUntil_confirmTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:textSize="18dp"
+        android:text="Confirm"
+        app:layout_constraintBottom_toTopOf="@+id/waitUntil_confirmYes"
+        app:layout_constraintLeft_toLeftOf="@+id/waitUntil_third"
+        app:layout_constraintRight_toRightOf="@+id/waitUntil_third"
+        app:layout_constraintTop_toBottomOf="@+id/waitUntil_third" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/waitUntil_confirmNo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="NO"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintLeft_toLeftOf="@+id/waitUntil_confirmTitle"
+        app:layout_constraintRight_toLeftOf="@+id/waitUntil_confirmYes"
+        app:layout_constraintTop_toBottomOf="@+id/waitUntil_confirmTitle" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/waitUntil_confirmYes"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="YES"
+        app:layout_constraintBottom_toTopOf="@+id/waitUntil_finished"
+        app:layout_constraintRight_toRightOf="@+id/waitUntil_confirmTitle"
+        app:layout_constraintLeft_toRightOf="@+id/waitUntil_confirmNo"
+        app:layout_constraintTop_toBottomOf="@+id/waitUntil_confirmTitle" />
+
+    <TextView
+        android:id="@+id/waitUntil_finished"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="center"
+        android:textSize="18dp"
+        android:text="Finished :-)"
+        android:textColor="@android:color/holo_green_dark"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/waitUntil_confirmYes" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

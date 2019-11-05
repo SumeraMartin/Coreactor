@@ -55,9 +55,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Scoped coroutines"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/main_waitUntil"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/main_counter" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/main_waitUntil"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Wait until sample"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/main_scoped" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

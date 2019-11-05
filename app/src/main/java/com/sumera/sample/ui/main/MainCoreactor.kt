@@ -11,8 +11,10 @@ import com.sumera.sample.ui.main.contract.NavigateToEventsShowcase
 import com.sumera.sample.ui.main.contract.NavigateToInfinityLoading
 import com.sumera.sample.ui.main.contract.NavigateToScoped
 import com.sumera.sample.ui.main.contract.NavigateToSimpleLoad
+import com.sumera.sample.ui.main.contract.NavigateToWaitUntil
 import com.sumera.sample.ui.main.contract.ScopedClicked
 import com.sumera.sample.ui.main.contract.SimpleLoadClicked
+import com.sumera.sample.ui.main.contract.WaitUntilClicked
 
 class MainCoreactor : Coreactor<MainState>() {
 
@@ -34,6 +36,9 @@ class MainCoreactor : Coreactor<MainState>() {
             }
             ScopedClicked -> {
                 emit(NavigateToScoped)
+            }
+            WaitUntilClicked -> {
+                emit(NavigateToWaitUntil)
             }
         }
     }

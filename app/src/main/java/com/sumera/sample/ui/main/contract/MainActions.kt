@@ -11,3 +11,5 @@ object InfinityLoadingClicked : Action<MainState>
 object CounterClicked : Action<MainState>
 
 object ScopedClicked : Action<MainState>
+
+object WaitUntilClicked : Action<MainState>
