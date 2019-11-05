@@ -74,8 +74,6 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     protected open val interceptor: CoreactorInterceptor<STATE> = SimpleInterceptor()
 
-    private var isNewlyCreated = true
-
     private val viewHandler = ViewHandler()
 
     private val eventHandler = EventHandler()
@@ -100,8 +98,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
         viewHandler.setView(coreactorView)
 
-        if (isNewlyCreated) {
-            isNewlyCreated = false
+        if (lifecycleState.isInitialState) {
             stateHandler.setInitialState(createInitialState())
             lifecycleStateHandler.dispatchLifecycleState(LifecycleState.ON_ATTACH)
         }
