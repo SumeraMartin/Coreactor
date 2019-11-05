@@ -16,3 +16,7 @@ internal object MainThreadChecker {
         }
     }
 }
+
+fun requireMainThread(methodName: String) {
+    MainThreadChecker.requireMainThread(methodName)
+}

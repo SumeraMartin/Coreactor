@@ -16,7 +16,7 @@ import com.sumera.coreactor.error.CoreactorException
 import com.sumera.coreactor.interceptor.CoreactorInterceptor
 import com.sumera.coreactor.interceptor.implementation.SimpleInterceptor
 import com.sumera.coreactor.internal.Either
-import com.sumera.coreactor.internal.assert.MainThreadChecker
+import com.sumera.coreactor.internal.assert.requireMainThread
 import com.sumera.coreactor.lifecycle.LifecycleState
 import com.sumera.coreactor.log.CoreactorLogger
 import com.sumera.coreactor.log.implementation.NoOpLogger
@@ -96,7 +96,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     //region Public methods
     fun attachView(coreactorView: CoreactorView<STATE>) {
-        MainThreadChecker.requireMainThread("attachView")
+        requireMainThread("attachView")
 
         viewHandler.setView(coreactorView)
 
@@ -108,7 +108,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     }
 
     fun sendAction(action: Action<STATE>) {
-        MainThreadChecker.requireMainThread("sendAction")
+        requireMainThread("sendAction")
 
         if (lifecycleState.isInitialState) {
             throw CoreactorException("sendAction shouldn't be called before attachView")
@@ -143,17 +143,17 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     }
 
     protected fun launchWhenResumed(block: suspend () -> Unit) {
-        MainThreadChecker.requireMainThread("launchWhenResumed")
+        requireMainThread("launchWhenResumed")
         scopedJobsDispatcher.startOrWaitUntilResumedState(block)
     }
 
     protected fun launchWhenStarted(block: suspend () -> Unit) {
-        MainThreadChecker.requireMainThread("launchWhenStarted")
+        requireMainThread("launchWhenStarted")
         scopedJobsDispatcher.startOrWaitUntilStartedState(block)
     }
 
     protected fun launchWhenCreated(block: suspend () -> Unit) {
-        MainThreadChecker.requireMainThread("launchWhenCreated")
+        requireMainThread("launchWhenCreated")
         scopedJobsDispatcher.startOrWaitUntilCreatedState(block)
     }
 
@@ -166,7 +166,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
     }
 
     protected fun emit(eventOrReducer: EventOrReducer<STATE>) {
-        MainThreadChecker.requireMainThread("emit")
+        requireMainThread("emit")
         dispatchEventOrReducer(eventOrReducer)
     }
 
