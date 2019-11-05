@@ -14,6 +14,9 @@ buildscript {
     ext.constraint_layout = '1.1.3'
     ext.material_design = '1.0.0'
 
+    // Deploy
+    ext.android_maven_gradle_plugin = "2.1"
+
     // Tests
     ext.junit_version = '4.12'
     ext.android_test_runner_version = '1.2.0'
@@ -35,8 +38,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.5.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "de.mannodermaus.gradle.plugins:android-junit5:1.5.2.0"
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath "com.github.dcendents:android-maven-gradle-plugin:$android_maven_gradle_plugin"
     }
 }
 
