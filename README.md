@@ -23,7 +23,7 @@ The previous version of this library was using RxJava but implementation with co
   
 **Reducer** is a function send from the coreactor that changes the current state to the new one which is then dispatched back to the view.    
   
-**Event** a command that is sent from the coreactor to the view that should be used to perform stateless operations (show a toast, navigate to the next screen ... ) 
+**Event** is a command that is sent from the coreactor to the view that should be used to perform stateless operations (show a toast, navigate to the next screen ...) 
 
 ## Setup
   
