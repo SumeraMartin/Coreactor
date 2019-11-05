@@ -1,5 +1,6 @@
 [![Build Status](https://app.bitrise.io/app/f2af7ee280d7331e/status.svg?token=OSoznIWwGIU1j6J9DLyxng)](https://app.bitrise.io/app/f2af7ee280d7331e)
 [![](https://jitpack.io/v/SumeraMartin/coreactor.svg)](https://jitpack.io/#SumeraMartin/coreactor)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Coreactor 
 
