@@ -251,7 +251,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     //region Private methods
     private fun cancelActiveCoroutines() {
-        cancel("View attached to this coreactor will be destroyed")
+        cancel("The coreactor is being destroyed.")
     }
 
     private fun dispatchEventOrReducer(eventOrReducer: EventOrReducer<STATE>) {
