@@ -3,9 +3,11 @@
 
 Coreactor is an MVI framework for Android applications with a focus on readability and simplicity.
   
-## Why coreactor?  
+## Why Coreactor?  
 
-TODO
+Coreactor provides a simple but powerful way of using MVI architecture with the full potential of Kotlin Coroutines. The library is built with the intention of readable code that can be easily understood by others.
+
+The previous version of this library was using RxJava but implementation with coroutine allows the same functionality with more readable and easier to maintain code.
 
 ## Coreactor terminology 
 **Coreactor** is the "manager" of the whole process of keeping and changing the state. It receives actions from the view and reacts to these actions by emitting reducers and events back to the view. 
