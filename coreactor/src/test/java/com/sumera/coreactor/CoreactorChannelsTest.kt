@@ -11,8 +11,6 @@ import com.sumera.coreactor.testutils.MainThreadCheckRule
 import com.sumera.coreactor.testutils.TestState
 import com.sumera.coreactor.testutils.TestView
 import com.sumera.coreactor.testutils.TestableCoreactor
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.lifecycle.CachingMode
@@ -53,11 +51,41 @@ class CoreactorChannelsTest : Spek({
         override fun onLifecycleState(state: LifecycleState) {
             when (state) {
                 LifecycleState.ON_RESUME -> {
-                    launch { actionChannel.consumeAsFlow().collect { actionList.add(it) } }
-                    launch { reducerChannel.consumeAsFlow().collect { reducerList.add(it) } }
-                    launch { eventChannel.consumeAsFlow().collect { eventList.add(it) } }
-                    launch { stateChannel.consumeAsFlow().collect { stateList.add(it) } }
-                    launch { lifecycleChannel.consumeAsFlow().collect { lifecycleList.add(it) } }
+                    launch {
+                        val subscription = openActionSubscription()
+                        while (true) {
+                            val action = subscription.receive()
+                            actionList.add(action)
+                        }
+                    }
+                    launch {
+                        val subscription = openReducerSubscription()
+                        while (true) {
+                            val reducer = subscription.receive()
+                            reducerList.add(reducer)
+                        }
+                    }
+                    launch {
+                        val subscription = openEventSubscription()
+                        while (true) {
+                            val event = subscription.receive()
+                            eventList.add(event)
+                        }
+                    }
+                    launch {
+                        val subscription = openStateSubscription()
+                        while (true) {
+                            val state = subscription.receive()
+                            stateList.add(state)
+                        }
+                    }
+                    launch {
+                        val subscription = openLifecycleSubscription()
+                        while (true) {
+                            val lifecycleState = subscription.receive()
+                            lifecycleList.add(lifecycleState)
+                        }
+                    }
                 }
             }
         }
@@ -93,7 +121,7 @@ class CoreactorChannelsTest : Spek({
         coroutineRule.tearDown()
     }
 
-    Feature("stateChannel") {
+    Feature("openStateSubscription") {
         Scenario("contains the state right after consuming") {
             When("coreactor is attached") {
                 coreactorHelper.attach()
@@ -122,7 +150,7 @@ class CoreactorChannelsTest : Spek({
         }
     }
 
-    Feature("actionChannel") {
+    Feature("openActionSubscription") {
         Scenario("does not contain action right after consuming") {
             When("action is send and then coreactor is attached and resumed") {
                 coreactorHelper.attach()
@@ -154,7 +182,7 @@ class CoreactorChannelsTest : Spek({
         }
     }
 
-    Feature("eventChannel") {
+    Feature("openEventSubscription") {
         Scenario("does not contain event right after consuming") {
             When("action is send and then coreactor is resumed") {
                 coreactorHelper.attach()
@@ -181,7 +209,7 @@ class CoreactorChannelsTest : Spek({
         }
     }
 
-    Feature("reducerChannel") {
+    Feature("`openReducerSubscription`") {
         Scenario("does not contain reducer right after consuming") {
             When("action is send and then coreactor is resumed") {
                 coreactorHelper.attach()
@@ -208,7 +236,7 @@ class CoreactorChannelsTest : Spek({
         }
     }
 
-    Feature("lifecycleChannel") {
+    Feature("openLifecycleSubscription") {
         Scenario("contains the lifecycle state right after consuming") {
             When("coreactor is attached") {
                 coreactorHelper.attach()

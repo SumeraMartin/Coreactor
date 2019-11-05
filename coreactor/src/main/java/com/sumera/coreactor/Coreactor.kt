@@ -23,22 +23,17 @@ import com.sumera.coreactor.log.implementation.NoOpLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, CoroutineScope by MainScope() {
 
@@ -50,24 +45,24 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return lifecycleStateHandler.currentLifecycleState
     }
 
-    protected val actionChannel: ReceiveChannel<Action<STATE>> get() {
-        return actionHandler.actionChannel
+    protected fun openActionSubscription(): ReceiveChannel<Action<STATE>> {
+        return actionHandler.openActionSubscription()
     }
 
-    protected val lifecycleChannel: ReceiveChannel<LifecycleState> get() {
-        return lifecycleStateHandler.lifecycleChannel
+    protected fun openLifecycleSubscription(): ReceiveChannel<LifecycleState> {
+        return lifecycleStateHandler.openLifecycleSubscription()
     }
 
-    protected val eventChannel: ReceiveChannel<Event<STATE>> get() {
-        return eventHandler.eventChannel
+    protected fun openEventSubscription(): ReceiveChannel<Event<STATE>> {
+        return eventHandler.openEventSubscription()
     }
 
-    protected val reducerChannel: ReceiveChannel<Reducer<STATE>> get() {
-        return reducerHandler.reducerChannel
+    protected fun openReducerSubscription(): ReceiveChannel<Reducer<STATE>> {
+        return reducerHandler.openReducerSubscription()
     }
 
-    protected val stateChannel: ReceiveChannel<STATE> get() {
-        return stateHandler.stateChannel
+    protected fun openStateSubscription(): ReceiveChannel<STATE> {
+        return stateHandler.openStateSubscription()
     }
 
     protected open val logger: CoreactorLogger<STATE> = NoOpLogger()
@@ -179,70 +174,51 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         return ActionReducer { state -> reducerBlock(state) }
     }
 
-    @FlowPreview
-    protected suspend fun waitUntilState(state: STATE): STATE {
-        return waitUntilState { it == state }
+    protected suspend fun waitUntilState(predicate: (STATE) -> Boolean): STATE {
+        return waitUntil(openStateSubscription(), predicate)
     }
 
-    @FlowPreview
-    protected suspend fun waitUntilState(predicate: suspend (STATE) -> Boolean): STATE {
-        var resultState: STATE? = null
-        stateChannel.consumeAsFlow().filter(predicate).take(1).collect { state ->
-            resultState = state
+    protected suspend inline fun <reified EXPECTED_REDUCER : Reducer<STATE>> waitUntilReducerType(): EXPECTED_REDUCER {
+        return waitUntil(openReducerSubscription()) { it is EXPECTED_REDUCER } as? EXPECTED_REDUCER ?: throw CoreactorException()
+    }
+
+    protected suspend fun waitUntilReducer(predicate: (Reducer<STATE>) -> Boolean): Reducer<STATE> {
+        return waitUntil(openReducerSubscription(), predicate)
+    }
+
+    protected suspend inline fun <reified EXPECTED_EVENT : Event<STATE>> waitUntilEventType(): EXPECTED_EVENT {
+        return waitUntilEvent { it is EXPECTED_EVENT } as? EXPECTED_EVENT ?: throw CoreactorException()
+    }
+
+    protected suspend fun waitUntilEvent(predicate: (Event<STATE>) -> Boolean): Event<STATE> {
+        return waitUntil(openEventSubscription(), predicate)
+    }
+
+    protected suspend inline fun <reified EXPECTED_ACTION : Action<STATE>> waitUntilActionType(): EXPECTED_ACTION {
+        return waitUntilAction { it is EXPECTED_ACTION } as? EXPECTED_ACTION ?: throw CoreactorException()
+    }
+
+    protected suspend fun waitUntilAction(predicate: (Action<STATE>) -> Boolean): Action<STATE> {
+        return waitUntil(openActionSubscription(), predicate)
+    }
+
+    protected suspend fun waitUntilLifecycle(lifecycleState: LifecycleState): LifecycleState {
+        return waitUntilLifecycle { it == lifecycleState }
+    }
+
+    protected suspend fun waitUntilLifecycle(predicate: (LifecycleState) -> Boolean): LifecycleState {
+        return waitUntil(openLifecycleSubscription(), predicate)
+    }
+
+    protected suspend fun <VALUE> waitUntil(subscription: ReceiveChannel<VALUE>, predicate: (VALUE) -> Boolean): VALUE {
+        requireMainThread("waitUntil")
+        while (true) {
+            val value = subscription.receive()
+            if (predicate(value)) {
+                subscription.cancel()
+                return value
+            }
         }
-        return resultState ?: throw CoreactorException()
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilReducer(action: Reducer<STATE>): Reducer<STATE> {
-        return waitUntilReducer { it == action }
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilReducer(predicate: suspend (Reducer<STATE>) -> Boolean): Reducer<STATE> {
-        var resultReducer: Reducer<STATE>? = null
-        reducerChannel.consumeAsFlow().filter(predicate).take(1).collect { reducer ->
-            resultReducer = reducer
-        }
-        return resultReducer ?: throw CoreactorException()
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilEvent(event: Event<STATE>): Event<STATE> {
-        return waitUntilEvent { it == event }
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilEvent(predicate: suspend (Event<STATE>) -> Boolean): Event<STATE> {
-        var resultEvent: Event<STATE>? = null
-        eventChannel.consumeAsFlow().filter(predicate).take(1).collect { event ->
-            resultEvent = event
-        }
-        return resultEvent ?: throw CoreactorException()
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilAction(action: Action<STATE>): Action<STATE> {
-        return waitUntilAction { it == action }
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilAction(predicate: suspend (Action<STATE>) -> Boolean): Action<STATE> {
-        var resultAction: Action<STATE>? = null
-        actionChannel.consumeAsFlow().filter(predicate).take(1).collect { action ->
-            resultAction = action
-        }
-        return resultAction ?: throw CoreactorException()
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilLifecycle(state: LifecycleState) {
-        waitUntilLifecycle { it == state }
-    }
-
-    @FlowPreview
-    protected suspend fun waitUntilLifecycle(predicate: suspend (LifecycleState) -> Boolean) {
-        lifecycleChannel.consumeAsFlow().filter(predicate).take(1).collect()
     }
     //endregion
 
@@ -290,15 +266,15 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     private inner class EventHandler {
 
-        val eventChannel: ReceiveChannel<Event<STATE>> get() {
-            return eventChannelInternal.openSubscription()
-        }
-
         private val eventChannelInternal = BroadcastChannel<Event<STATE>>(1)
 
         private val eventsWaitingForCreatedState = mutableListOf<Event<STATE>>()
 
         private val eventsWaitingForStartedState = mutableListOf<Event<STATE>>()
+
+        fun openEventSubscription(): ReceiveChannel<Event<STATE>> {
+            return eventChannelInternal.openSubscription()
+        }
 
         fun dispatchEventsWaitingForCreatedState() {
             eventsWaitingForCreatedState.apply {
@@ -357,10 +333,6 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     private inner class StateHandler {
 
-        val stateChannel: ReceiveChannel<STATE> get() {
-            return stateChannelInternal.openSubscription()
-        }
-
         val currentState: STATE get() {
             return currentStateInternal ?: throw CoreactorException("State is not initialized yet")
         }
@@ -368,6 +340,10 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
         private var currentStateInternal: STATE? = null
 
         private val stateChannelInternal = ConflatedBroadcastChannel<STATE>()
+
+        fun openStateSubscription(): ReceiveChannel<STATE> {
+            return stateChannelInternal.openSubscription()
+        }
 
         fun getStateOrNull(): STATE? {
             return currentStateInternal
@@ -414,14 +390,14 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     private inner class LifecycleStateHandler {
 
-        val lifecycleChannel: ReceiveChannel<LifecycleState> get() {
-            return lifecycleStateChannelInternal.openSubscription()
-        }
-
         var currentLifecycleState: LifecycleState = LifecycleState.INITIAL
             private set
 
         private val lifecycleStateChannelInternal = ConflatedBroadcastChannel<LifecycleState>()
+
+        fun openLifecycleSubscription(): ReceiveChannel<LifecycleState> {
+            return lifecycleStateChannelInternal.openSubscription()
+        }
 
         fun dispatchLifecycleState(lifecycleState: LifecycleState) {
             interceptor.onLifecycleStateChanged(lifecycleState)
@@ -449,11 +425,11 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     private inner class ReducerHandler {
 
-        val reducerChannel: ReceiveChannel<Reducer<STATE>> get() {
+        private val reducerChannelInternal = BroadcastChannel<Reducer<STATE>>(1)
+
+        fun openReducerSubscription(): ReceiveChannel<Reducer<STATE>> {
             return reducerChannelInternal.openSubscription()
         }
-
-        private val reducerChannelInternal = BroadcastChannel<Reducer<STATE>>(1)
 
         fun dispatchReducer(reducer: Reducer<STATE>) {
             val interceptedReducer = interceptor.onInterceptReducer(reducer) ?: return
@@ -469,11 +445,11 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
 
     private inner class ActionHandler {
 
-        val actionChannel: ReceiveChannel<Action<STATE>> get() {
+        private val actionChannelInternal = BroadcastChannel<Action<STATE>>(1)
+
+        fun openActionSubscription(): ReceiveChannel<Action<STATE>> {
             return actionChannelInternal.openSubscription()
         }
-
-        private val actionChannelInternal = BroadcastChannel<Action<STATE>>(1)
 
         fun dispatchAction(action: Action<STATE>) {
             val interceptedAction = interceptor.onInterceptAction(action)
