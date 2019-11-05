@@ -584,7 +584,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
                 LifecycleState.ON_CREATE -> jobsWaitingForCreatedState
                 LifecycleState.ON_START -> jobsWaitingForStartedState
                 LifecycleState.ON_RESUME -> jobsWaitingForResumedState
-                else -> throw CoreactorException()
+                else -> throw CoreactorException("Unexpected lifecycle state: $lifecycleState")
             }
         }
 
@@ -593,7 +593,7 @@ abstract class Coreactor<STATE : State> : ViewModel(), LifecycleObserver, Corout
                 LifecycleState.ON_PAUSE -> jobsRunningUntilPausedState
                 LifecycleState.ON_STOP -> jobsRunningUntilStoppedState
                 LifecycleState.ON_DESTROY -> jobsRunningUntilDestroyedState
-                else -> throw CoreactorException()
+                else -> throw CoreactorException("Unexpected lifecycle state: $lifecycleState")
             }
         }
 
