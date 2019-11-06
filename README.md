@@ -177,7 +177,7 @@ class CounterActivity : CoreactorActivity<CounterState>(), CoreactorView<Counter
 ## Advanced usage  
 
 ### Wait until methods
-Coroutine channels are used for the implementation of `waitUntil...` methods for actions, reducers, events, states, and lifecycle states. These methods suspend current coroutine and then will wait until the given condition is fulfilled or the expected object is received. These methods can be used for more complex flow that requires multiple consequent actions.
+`waitUntil...` methods suspend current coroutine and then will wait until the given condition is fulfilled or the expected object is received. They are implemented for actions, reducers, events, states, and lifecycle states and should be used for more complex flows that require multiple consequent actions.
 ```kotlin
 OnDeleteItemClickedAction -> launch {
 
