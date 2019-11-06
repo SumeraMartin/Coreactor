@@ -4,7 +4,7 @@
 
 # Coreactor 
 
-Coreactor is an MVI framework for Android applications with a focus on readability and simplicity.
+Coreactor is an MVI framework for Android applications written for Kotlin Coroutines with a focus on readability and simplicity.
   
 ## Why Coreactor?  
 
