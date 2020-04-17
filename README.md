@@ -1,12 +1,29 @@
+![Title](documentation/Coreactor.svg)
+
+# Coreactor 
 [![Build Status](https://app.bitrise.io/app/f2af7ee280d7331e/status.svg?token=OSoznIWwGIU1j6J9DLyxng)](https://app.bitrise.io/app/f2af7ee280d7331e)
 [![](https://jitpack.io/v/SumeraMartin/coreactor.svg)](https://jitpack.io/#SumeraMartin/coreactor)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-# Coreactor 
-
 Coreactor is an MVI framework for Android applications written for Kotlin Coroutines with a focus on readability and simplicity.
+
+# Installation
   
-## Why Coreactor?  
+```
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
+```
+dependencies {
+    implementation 'com.github.sumeramartin:coreactor:0.0.1'
+}
+```
+
+# Features  
 
 Coreactor provides a simple but powerful way of using MVI architecture with the full potential of Kotlin Coroutines. The library is built with the intention of readable code that can be easily understood by others.
 
@@ -24,24 +41,8 @@ The previous version of this library was using RxJava but implementation with co
 **Reducer** is a function send from the coreactor that changes the current state to the new one which is then dispatched back to the view.    
   
 **Event** is a command that is sent from the coreactor to the view that should be used to perform stateless operations (show a toast, navigate to the next screen ...) 
-
-## Setup
   
-```
-allprojects {
-    repositories {
-        ...
-        maven { url 'https://jitpack.io' }
-    }
-}
-```
-```
-dependencies {
-    implementation 'com.github.sumeramartin:coreactor:0.0.1'
-}
-```
-  
-## Sample  
+# Usage  
   
 In the following sample, we will create a simple counter activity that will allow a user to increment or decrement the value of the counter and show the toast when the number will be divisible by 5.
   
@@ -241,3 +242,11 @@ launch {
 
 ### Open methods
 Coreactor methods `onLifecycleState` or `onState` can be overridden to receive changes in the lifecycle state and in the current state. 
+
+# Contributors
+
+Current maintainer and main developer is [Martin Sumera](https://github.com/SumeraMartin)
+
+# License
+
+Coreactor is available under MIT license. See the [LICENSE file](LICENSE) for more information.
